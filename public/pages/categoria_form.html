@@ -104,7 +104,6 @@
           if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
 
           const categoriaData = {
-            // As chaves aqui devem ser exatamente como esperado pela função saveCategoria no backend (CABECALHOS)
             Nome_Categoria: nomeCategoriaField.value,
             Descricao_Categoria: descricaoCategoriaField.value,
             Status_Categoria: statusCategoriaField.value
@@ -125,11 +124,8 @@
               if (!idParaEditar) { 
                 form.reset(); 
                 statusCategoriaField.value = "Ativa"; 
-              } else {
-                // Se estava editando, talvez não resetar ou dar opção de voltar para lista
-              }
-              // Opcional: Recarregar a lista de categorias se estiver em um contexto de SPA com lista visível
-              // if (typeof refreshCategoriasList === 'function') refreshCategoriasList(); 
+              } 
+
             }
           } catch (error) {
             if (messageDiv) {
