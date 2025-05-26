@@ -112,7 +112,6 @@
       const messageDivCliente = document.getElementById('messageCliente');
       const formTitleCliente = document.getElementById('formTitleCliente');
       const clientIdField = document.getElementById('clientIdToUpdateHtml');
-
       const nomeClienteEl = document.getElementById('nomeCliente');
       const emailClienteEl = document.getElementById('emailCliente');
       const whatsappClienteEl = document.getElementById('whatsappCliente');
@@ -135,7 +134,6 @@
       let idClienteAtualParaEdicao = window.clientIdToEdit || null; 
       console.log("ID do Cliente para edição (cliente_form.html):", idClienteAtualParaEdicao);
 
-      // --- Suas funções de máscara e validação (copiadas do seu script original) ---
       function aplicarMascaraWhatsApp(event) { /* ... (seu código) ... */ 
         let valor = event.target.value.replace(/\D/g, ''); 
         let mascaraAplicada = '';
@@ -354,7 +352,6 @@
         });
       }
       
-      // --- Lógica de Edição e Submissão (seu código original, com pequenas adaptações) ---
       function preencherFormularioCliente(clientDetails) { /* ... (seu código) ... */ 
         if (!clientDetails) {
         messageDivCliente.textContent = 'Erro: Não foi possível carregar dados do cliente.';
