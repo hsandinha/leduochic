@@ -52,7 +52,7 @@
               <th>SKU Base</th>
               <th>Categoria</th>
               <th>Marca</th>
-              <th>Caracteristicas</th>
+              <th>Mais</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -195,14 +195,14 @@
           row.insertCell().textContent = pb.marcaPadrao || 'N/D'; 
 
 
-          const cellAcoes = row.insertCell();
+          const cellcaract = row.insertCell();
           const btnVerCaracteristicas = document.createElement('button');
           btnVerCaracteristicas.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom;"></span> Ver Mais.';
           btnVerCaracteristicas.className = 'btn-table-action'; // Use uma classe de info ou view se tiver no seu CSS
           btnVerCaracteristicas.type = 'button';
           btnVerCaracteristicas.style.marginLeft = '5px'; 
           btnVerCaracteristicas.title = "Ver/Ocultar Características";
-          cellAcoes.appendChild(btnVerCaracteristicas);
+          cellcaract.appendChild(btnVerCaracteristicas);
           
           const cellAcoes = row.insertCell();
           // Botão Gerenciar
@@ -214,7 +214,7 @@
           btnGerenciar.onclick = function() {
             if (typeof loadPage === 'function') {
               window.baseProductIdToLoad = baseProductId; 
-              loadPage('produto_gerenciamento_form.html', `Gerenciar: ${pb.nomeBase}`); // Nome da sua página de gerenciamento
+              loadPage('produto_form.html', `Gerenciar: ${pb.nomeBase}`); // Nome da sua página de gerenciamento
             }
           };
           cellAcoes.appendChild(btnGerenciar);
