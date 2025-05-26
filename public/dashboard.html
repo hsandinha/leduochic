@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestão - Le Duo Chic</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"> 
+</head>
+<body>
+
+  <script src="js/api.js"></script> 
+  <script>
+    // Script de verificação de sessão para dashboard.html
+    (async function() {
+      console.log("Dashboard: Iniciando verificação de sessão...");
+      const sessionId = localStorage.getItem('userSessionId');
+      const userDataString = localStorage.getItem('userData');
+      let user = null;
+
+      if (userDataString) {
+        try {
+          user = JSON.parse(userDataString);
+        } catch (e) {
+          console.error("Dashboard: Erro ao parsear userData do localStorage", e);
+          localStorage.removeItem('userSessionId');
+          localStorage.removeItem('userData');
+          window.location.href = 'index.html'; // Redireciona para login
+          return; // Interrompe a execução adicional deste script
+        }
+      }
+
+      if (!sessionId || !user) {
+        console.log("Dashboard: Sem sessionId ou userData no localStorage. Redirecionando para login.");
+        window.location.href = 'index.html'; 
+        return; // Interrompe a execução adicional deste script
+      }
+      let tempLoadingDiv = null;
+      if (!document.getElementById('globalLoadingOverlay')) { // Evita duplicar se já existir
+        tempLoadingDiv = document.createElement('div');
+        tempLoadingDiv.innerHTML = '<div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); display:flex; justify-content:center; align-items:center; z-index:10000;"><p style="background:white; padding:20px; border-radius:5px;">A verificar sessão...</p></div>';
+        document.body.appendChild(tempLoadingDiv);
+      }
+
+
+      try {
+        console.log("Dashboard: Chamando checkSessionAPI com sessionId:", sessionId);
+        const sessionCheckResponse = await checkSessionAPI(sessionId); // Função do api.js
+        
+        if (tempLoadingDiv) tempLoadingDiv.remove(); // Remove loading temporário
+
+        if (!sessionCheckResponse || !sessionCheckResponse.isLoggedIn) {
+          console.log("Dashboard: Sessão inválida ou expirada no backend. Redirecionando para login.");
+          localStorage.removeItem('userSessionId');
+          localStorage.removeItem('userData');
+          window.location.href = 'index.html';
+        } else {
+          console.log("Dashboard: Sessão válida. Utilizador:", sessionCheckResponse.user ? sessionCheckResponse.user.nomeCompleto : "N/A");
+          // A página pode continuar a carregar. O main.js será executado a seguir.
+          // Pode-se popular o nome do utilizador na UI aqui, se houver um elemento para isso.
+          // Ex: document.getElementById('userNameDisplay').textContent = sessionCheckResponse.user.nomeCompleto;
+        }
+      } catch (error) {
+        if (tempLoadingDiv) tempLoadingDiv.remove();
+        console.error("Dashboard: Erro ao verificar sessão com backend. Redirecionando para login.", error);
+        localStorage.removeItem('userSessionId');
+        localStorage.removeItem('userData');
+        window.location.href = 'index.html';
+      }
+    })();
+  </script>
+
+  <button id="sidebar-toggle">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+    </svg>
+  </button>
+
+  <div id="sidebar-container">
+    <p style="text-align:center; color:#6b7280;">Carregando menu...</p>
+  </div>
+
+  <div id="main-content-container">
+    <div class="content-placeholder">
+      <img src="/pages/img/logo_rosa_transparente.png" alt="Logomarca Le Duo Chic" style="max-width: 200px; margin-bottom: 1rem; border-radius: 8px;">
+      <p>Bem-vindo ao Sistema de Gestão Le Duo Chic!</p>
+    </div>
+  </div>
+
+  <div id="globalLoadingOverlay" class="loading-overlay" style="display:none;">
+    Carregando...
+  </div>
+
+  <script src="js/main.js"></script> </body>
+</html>

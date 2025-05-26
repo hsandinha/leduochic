@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+      <h2 id="formTitleCategoria">Cadastrar Categoria</h2>
+      <form id="categoriaFormHtml">
+        <input type="hidden" id="categoriaId" name="categoriaId">
+
+        <div class="full-width">
+          <label for="nomeCategoria">Nome da Categoria:</label>
+          <input type="text" id="nomeCategoria" name="Nome_Categoria" required>
+        </div>
+
+        <div class="full-width">
+          <label for="descricaoCategoria">Descrição (Opcional):</label>
+          <textarea id="descricaoCategoria" name="Descricao_Categoria" rows="3"></textarea>
+        </div>
+
+        <div>
+          <label for="statusCategoria">Status:</label>
+          <select id="statusCategoria" name="Status_Categoria" required>
+            <option value="Ativa" selected>Ativa</option>
+            <option value="Inativa">Inativa</option>
+          </select>
+        </div>
+        
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" id="cancelButtonCategoria" class="btn-secondary" style="margin-right: 10px; display: none;">Cancelar</button>
+          <button type="submit" id="submitButtonCategoria" class="btn-action-form">Salvar Categoria</button> 
+          </div>
+      </form>
+      <div id="messageCategoriaForm" class="message-feedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() { 
+      console.log("Script de Categoria_form.html executando.");
+      const form = document.getElementById('categoriaFormHtml');
+      const formTitle = document.getElementById('formTitleCategoria');
+      const submitButton = document.getElementById('submitButtonCategoria');
+      const cancelButton = document.getElementById('cancelButtonCategoria');
+      const messageDiv = document.getElementById('messageCategoriaForm');
+      
+      const categoriaIdField = document.getElementById('categoriaId');
+      const nomeCategoriaField = document.getElementById('nomeCategoria');
+      const descricaoCategoriaField = document.getElementById('descricaoCategoria');
+      const statusCategoriaField = document.getElementById('statusCategoria');
+
+      let idParaEditar = null;
+
+      async function carregarDadosCategoriaParaEdicao(id) {
+        if (!id) return;
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+          const categoria = await getCategoriaDetailsByIdAPI(id); 
+          if (categoria && categoria.iDCategoria) { // Verifica se o objeto e o ID existem
+            formTitle.textContent = 'Editar Categoria';
+            categoriaIdField.value = categoria.iDCategoria; 
+            nomeCategoriaField.value = categoria.nomeCategoria || '';
+            descricaoCategoriaField.value = categoria.descricaoCategoria || '';
+            statusCategoriaField.value = categoria.statusCategoria || 'Ativa';
+            submitButton.textContent = 'Atualizar Categoria';
+            cancelButton.style.display = 'inline-block';
+            idParaEditar = categoria.iDCategoria;
+          } else {
+            throw new Error('Categoria não encontrada ou dados inválidos.');
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados da categoria para edição:", error);
+          if(messageDiv) {
+            messageDiv.textContent = 'Erro ao carregar dados da categoria: ' + error.message;
+            messageDiv.className = 'message-feedback error';
+            messageDiv.style.display = 'block';
+            setTimeout(() => { if (messageDiv) messageDiv.style.display = 'none'; }, 5000);
+          }
+        } finally {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+      }
+
+      if (window.categoriaIdToEdit) { 
+        carregarDadosCategoriaParaEdicao(window.categoriaIdToEdit);
+        window.categoriaIdToEdit = null; 
+      } else {
+        formTitle.textContent = 'Cadastrar Nova Categoria';
+        submitButton.textContent = 'Salvar Categoria';
+        cancelButton.style.display = 'none';
+        form.reset(); // Garante que o formulário esteja limpo
+        statusCategoriaField.value = "Ativa"; // Define o padrão para o status
+      }
+
+      if (form) {
+        form.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          if (submitButton.disabled) return; // Evita múltiplos envios
+
+          submitButton.disabled = true;
+          submitButton.textContent = idParaEditar ? 'Atualizando...' : 'Salvando...';
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+          const categoriaData = {
+            // As chaves aqui devem ser exatamente como esperado pela função saveCategoria no backend (CABECALHOS)
+            Nome_Categoria: nomeCategoriaField.value,
+            Descricao_Categoria: descricaoCategoriaField.value,
+            Status_Categoria: statusCategoriaField.value
+          };
+
+          console.log("Dados da categoria a serem enviados:", categoriaData, "ID para Editar:", idParaEditar);
+
+          try {
+            const response = await saveCategoriaAPI(categoriaData, idParaEditar); 
+            
+            if (messageDiv) {
+              messageDiv.textContent = response.message;
+              messageDiv.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+              messageDiv.style.display = 'block';
+            }
+
+            if (response.status === "success") {
+              if (!idParaEditar) { 
+                form.reset(); 
+                statusCategoriaField.value = "Ativa"; 
+              } else {
+                // Se estava editando, talvez não resetar ou dar opção de voltar para lista
+              }
+              // Opcional: Recarregar a lista de categorias se estiver em um contexto de SPA com lista visível
+              // if (typeof refreshCategoriasList === 'function') refreshCategoriasList(); 
+            }
+          } catch (error) {
+            if (messageDiv) {
+              messageDiv.textContent = 'Erro ao salvar categoria: ' + error.message;
+              messageDiv.className = 'message-feedback error';
+              messageDiv.style.display = 'block';
+            }
+            console.error("Erro da API ao salvar categoria:", error);
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = idParaEditar ? 'Atualizar Categoria' : 'Salvar Categoria';
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if (messageDiv) messageDiv.style.display = 'none'; }, 5000);
+          }
+        });
+      } else {
+        console.error("Formulário 'categoriaFormHtml' não encontrado.");
+      }
+
+      if (cancelButton) {
+        cancelButton.addEventListener('click', function() {
+          formTitle.textContent = 'Cadastrar Nova Categoria';
+          submitButton.textContent = 'Salvar Categoria';
+          form.reset();
+          statusCategoriaField.value = "Ativa";
+          categoriaIdField.value = '';
+          idParaEditar = null;
+          cancelButton.style.display = 'none';
+          if (messageDiv) messageDiv.style.display = 'none';
+          // Opcional: Redirecionar para a lista de categorias
+          if (typeof loadPage === 'function') {
+             loadPage('pesquisar_categoria_form.html', 'Consultar Categorias');
+          }
+        });
+      }
+
+    })();
+  </script>
+</body>
+</html>

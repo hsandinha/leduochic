@@ -1,0 +1,199 @@
+<div class="page-content-wrapper">
+  <div class="form-container">
+    <h2 id="formTitleUsuario">Cadastrar Novo Utilizador</h2>
+    <form id="userFormHtml">
+      <input type="hidden" id="userIdToUpdateHtml">
+
+      <div class="form-grid">
+        <div>
+          <label for="nomeUsuario">Usuário:</label>
+          <input type="text" id="nomeUsuario" name="nomeUsuario" required>
+        </div>
+        <div>
+          <label for="nomeCompletoUsuario">Nome</label>
+          <input type="text" id="nomeCompletoUsuario" name="nomeCompleto" required>
+        </div>
+        <div>
+          <label for="senhaUsuario">Senha:</label>
+          <input type="password" id="senhaUsuario" name="senhaUsuario" placeholder="Digite sua senha">
+        </div>
+        <div>
+          <label for="confirmarSenhaUsuario">Confirmar Senha:</label>
+          <input type="password" id="confirmarSenhaUsuario" name="confirmarSenhaUsuario" placeholder="Confirme sua senha">
+        </div>
+        <div class="md-col-span-2">
+          <label for="nivelAcessoUsuario">Nível de Acesso:</label>
+          <select id="nivelAcessoUsuario" name="nivelAcesso">
+            <option value="usuario" selected>Utilizador Padrão</option>
+            <option value="admin">Administrador</option>
+            </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button type="submit" id="submitButtonUsuario">
+          Salvar Utilizador
+        </button>
+      </div>
+    </form>
+    <div id="messageUsuarioForm" class="message-feedback" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+  // Script específico para usuario_form.html
+(function() {
+    console.log("Script de usuario_form.html a executar.");
+    const userForm = document.getElementById('userFormHtml');
+    const submitButtonUsuario = document.getElementById('submitButtonUsuario');
+    const messageDivUsuario = document.getElementById('messageUsuarioForm');
+    const formTitleUsuario = document.getElementById('formTitleUsuario');
+    const userIdField = document.getElementById('userIdToUpdateHtml');
+
+    const nomeUsuarioEl = document.getElementById('nomeUsuario');
+    const nomeCompletoEl = document.getElementById('nomeCompletoUsuario');
+    const senhaEl = document.getElementById('senhaUsuario');
+    const confirmarSenhaEl = document.getElementById('confirmarSenhaUsuario');
+    const nivelAcessoEl = document.getElementById('nivelAcessoUsuario');
+
+    let idUtilizadorAtualParaEdicao = window.userIdToEdit || null; 
+    console.log("ID do Utilizador para edição (dentro de usuario_form.html):", idUtilizadorAtualParaEdicao);
+
+    function preencherFormularioUsuario(userDetails) {
+        if (!userDetails) {
+            messageDivUsuario.textContent = 'Erro: Não foi possível carregar dados do utilizador.';
+            messageDivUsuario.className = 'message-feedback error';
+            messageDivUsuario.style.display = 'block';
+            return;
+        }
+        console.log("A preencher formulário de utilizador com:", userDetails);
+        nomeUsuarioEl.value = userDetails.Nome_Usuario || ''; // A chave vem do backend (sem espaços)
+        nomeCompletoEl.value = userDetails.Nome_Completo || '';
+        nivelAcessoEl.value = userDetails.Nivel_Acesso || 'usuario';
+        // Não preenchemos a senha por segurança
+        senhaEl.placeholder = "Deixe em branco para não alterar";
+        confirmarSenhaEl.placeholder = "Deixe em branco para não alterar";
+        
+        userIdField.value = idUtilizadorAtualParaEdicao;
+        formTitleUsuario.textContent = 'Editar Utilizador (ID: ' + idUtilizadorAtualParaEdicao + ')';
+        submitButtonUsuario.textContent = 'Atualizar Utilizador';
+    }
+
+    if (idUtilizadorAtualParaEdicao) {
+        formTitleUsuario.textContent = 'A carregar dados do Utilizador ID: ' + idUtilizadorAtualParaEdicao + '...';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        
+        getUserDetailsByIdAPI(idUtilizadorAtualParaEdicao) // Função do api.js
+            .then(details => {
+                if (details) {
+                    preencherFormularioUsuario(details);
+                } else {
+                    messageDivUsuario.textContent = 'Utilizador não encontrado ou erro ao carregar.';
+                    messageDivUsuario.className = 'message-feedback error';
+                    messageDivUsuario.style.display = 'block';
+                    formTitleUsuario.textContent = 'Erro ao Carregar Utilizador';
+                }
+            })
+            .catch(err => {
+                console.error("Falha ao obter detalhes do utilizador (API):", err);
+                messageDivUsuario.textContent = 'Erro ao carregar dados do utilizador: ' + err.message;
+                messageDivUsuario.className = 'message-feedback error';
+                messageDivUsuario.style.display = 'block';
+                formTitleUsuario.textContent = 'Erro ao Carregar Utilizador';
+            })
+            .finally(() => {
+                if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            });
+    } else {
+       formTitleUsuario.textContent = 'Cadastrar Novo Utilizador';
+       submitButtonUsuario.textContent = 'Salvar Utilizador';
+       senhaEl.required = true; // Senha é obrigatória para novos utilizadores
+       confirmarSenhaEl.required = true;
+    }
+
+    if (userForm) {
+        userForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (submitButtonUsuario) {
+                submitButtonUsuario.disabled = true;
+                submitButtonUsuario.textContent = idUtilizadorAtualParaEdicao ? 'A atualizar...' : 'A salvar...';
+            }
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+            const senha = senhaEl.value;
+            const confirmarSenha = confirmarSenhaEl.value;
+
+            if (!idUtilizadorAtualParaEdicao && !senha) { // Novo utilizador, senha obrigatória
+                messageDivUsuario.textContent = 'Confirme sua senha';
+                messageDivUsuario.className = 'message-feedback error';
+                messageDivUsuario.style.display = 'block';
+                if (submitButtonUsuario) {
+                    submitButtonUsuario.disabled = false;
+                    submitButtonUsuario.textContent = 'Salvar Utilizador';
+                }
+                if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                return;
+            }
+
+            if (senha && senha !== confirmarSenha) {
+                messageDivUsuario.textContent = 'As senhas não coincidem.';
+                messageDivUsuario.className = 'message-feedback error';
+                messageDivUsuario.style.display = 'block';
+                if (submitButtonUsuario) {
+                    submitButtonUsuario.disabled = false;
+                    submitButtonUsuario.textContent = idUtilizadorAtualParaEdicao ? 'Atualizar Utilizador' : 'Salvar Utilizador';
+                }
+                if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                return;
+            }
+
+            const userDataPayload = { 
+                nomeUsuario: nomeUsuarioEl.value,
+                nomeCompleto: nomeCompletoEl.value,
+                nivelAcesso: nivelAcessoEl.value
+                // A senha só é enviada se não estiver vazia
+            };
+            if (senha) {
+                userDataPayload.senha = senha;
+            }
+            
+            const idParaAtualizar = userIdField.value || null;
+
+            try {
+                const response = await saveUserAPI(userDataPayload, idParaAtualizar); // Função do api.js
+                
+                if(messageDivUsuario) {
+                    messageDivUsuario.textContent = response.message;
+                    messageDivUsuario.style.display = 'block';
+                    messageDivUsuario.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                }
+
+                if (response.status === "success") {
+                    if (!idParaAtualizar) { 
+                        userForm.reset();
+                    }
+                    // Opcional: redirecionar ou limpar o formulário de edição também
+                }
+            } catch (error) {
+                if(messageDivUsuario) {
+                    messageDivUsuario.textContent = 'Erro ao salvar utilizador: ' + error.message;
+                    messageDivUsuario.className = 'message-feedback error';
+                    messageDivUsuario.style.display = 'block';
+                }
+                console.error("Erro da API ao salvar utilizador:", error);
+            } finally {
+                if (submitButtonUsuario) {
+                    submitButtonUsuario.disabled = false; 
+                    submitButtonUsuario.textContent = idParaAtualizar ? 'Atualizar Utilizador' : 'Salvar Utilizador';
+                }
+                if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                setTimeout(() => { if(messageDivUsuario) messageDivUsuario.style.display = 'none';}, 4000);
+            }
+        });
+    } else {
+        console.error("Formulário 'userFormHtml' não encontrado.");
+    }
+})(); 
+</script>
+</body>
+</html>

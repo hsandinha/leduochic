@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+      <h2 id="formTitleProdutoGerenciamento">Gerenciar Produto e Suas Caracteristicas</h2>
+
+      <div class="section-produto-base" style="border: 1px solid var(--cinza-bordas); padding: 1.5rem; border-radius: 0.375rem; margin-bottom: 2rem;">
+        <h3 style="margin-top:0; color: var(--rosa-profundo);">Dados do Produto</h3>
+        <form id="baseProductFormHtml">
+          <input type="hidden" id="baseProductId" name="ID_Base_Produto">
+
+          <div class="form-grid md:grid-cols-3">
+            <div>
+              <label for="selectExistenteBaseProduto">Adicionar Caracteristica ou Criar um Novo Produto:</label>
+              <select id="selectExistenteBaseProduto" name="selectExistenteBaseProduto">
+                <option value="">Criar Novo Produto</option>
+                </select>
+            </div>
+             <div>
+              <label for="nomeBaseProduto">Nome do Produto:</label>
+              <input type="text" id="nomeBaseProduto" name="Nome_Base" required>
+            </div>
+            <div>
+              <label for="codigoSKUBaseProduto">Código/SKU:</label>
+              <input type="text" id="codigoSKUBaseProduto" name="Codigo_SKU_Base" required>
+            </div>
+            <div>
+              <label for="categoriaPadraoBaseProduto">Categoria:</label>
+              <select id="categoriaPadraoBaseProduto" name="Categoria_Padrao" required>
+                <option value="">Carregando categorias...</option>
+                </select>
+            </div>
+            <div>
+              <label for="marcaPadraoBaseProduto">Marca:</label>
+              <input type="text" id="marcaPadraoBaseProduto" name="Marca_Padrao">
+            </div>
+            <div>
+              <label for="fornecedorPadraoBaseProduto">Fornecedor:</label>
+              <select id="fornecedorPadraoBaseProduto" name="Fornecedor_Padrao">
+                <option value="">Carregando fornecedores...</option>
+                </select>
+            </div>
+            <div class="md-col-span-3">
+              <label for="descricaoBaseProduto">Descrição:</label>
+              <textarea id="descricaoBaseProduto" name="Descricao_Base" rows="3"></textarea>
+            </div>
+            <div class="md-col-span-3">
+              <label for="observacoesBaseProduto">Observações do Produto:</label>
+              <textarea id="observacoesBaseProduto" name="Observacoes_Base" rows="2"></textarea>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            <button type="submit" id="submitBaseProductButton" class="btn-action-form">Salvar Produto</button>
+          </div>
+        </form>
+        <div id="messageBaseProduct" class="message-feedback" style="display:none;"></div>
+      </div>
+
+      <div id="sectionVariantesProduto" class="section-variantes-produto" style="border: 1px solid var(--cinza-bordas); padding: 1.5rem; border-radius: 0.375rem; display: none;">
+        <h3 style="margin-top:0; color: var(--rosa-profundo);">
+            Gerenciar Caracteristicas: <span id="nomeBaseProdutoDisplay" style="font-style: italic;"></span>
+        </h3>
+        
+                <h4 style="font-size: 1.1em; color: var(--cinza-texto-principal);">Caracteristicas Cadastradas</h4>
+        <div class="table-container">
+          <table id="variantsTable">
+            <thead>
+              <tr>
+                <th>Codigo</th>
+                <th>Descrição</th>
+                <th>Cor</th>
+                <th>Tamanho</th>
+                <th>Preço (R$)</th>
+                <th>Estoque</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="variantsTableBody">
+              <tr><td colspan="7" style="text-align:center;">Nenhum complemento para este produto ou produto não selecionado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <form id="variantFormHtml" style="margin-bottom: 1.5rem; padding-bottom:1.5rem; border-bottom: 1px solid var(--cinza-bordas);">
+          <input type="hidden" id="variantId" name="ID_Variante">
+          <input type="hidden" id="baseProductId_FK" name="ID_Base_Produto_FK"> <h4 id="formTitleVariant" style="font-size: 1.1em; color: var(--cinza-texto-principal);">Adicionar Nova Variante</h4>
+
+          <div class="form-grid md:grid-cols-3">
+            <div>
+              <label for="corVariante">Cor:</label>
+              <input type="text" id="corVariante" name="Cor" required>
+            </div>
+            <div>
+              <label for="tamanhoVariante">Tamanho:</label>
+              <select id="tamanhoVariante" name="Tamanho" required>
+                <option value="">Selecione a categoria do Produto</option>
+              </select>
+              <input type="text" id="tamanhoVarianteTexto" name="TamanhoTexto" style="display:none;" readonly>
+            </div>
+            <div>
+              <label for="etiquetaVariante">Etiqueta (Opcional):</label>
+              <input type="text" id="etiquetaVariante" name="Etiqueta_Variante">
+            </div>
+            <div>
+              <label for="precoUnitarioVariante">Preço Unitário (R$):</label>
+              <input type="number" id="precoUnitarioVariante" name="Preco_Unitario" step="0.01" min="0" required>
+            </div>
+             <div class="md-col-span-3">
+              <label for="observacoesVariante">Observações complementares:</label>
+              <textarea id="observacoesVariante" name="Observacoes_Variante" rows="2"></textarea>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            <button type="button" id="cancelEditVariantButton" class="btn-secondary" style="margin-right: 10px; display: none;">Cancelar Edição</button>
+            <button type="submit" id="submitVariantButton" class="btn-action-form">Adicionar Caracteristica</button>
+          </div>
+        </form>
+        <div id="messageVariant" class="message-feedback" style="display:none;"></div>
+
+
+      </div>
+    </div></div><script>
+    (function() {
+      console.log("Script de produto_gerenciamento_form.html executando.");
+
+      // --- Elementos do DOM - Produto Base ---
+      const baseProductForm = document.getElementById('baseProductFormHtml');
+      const baseProductIdField = document.getElementById('baseProductId');
+      const selectExistenteBaseProdutoEl = document.getElementById('selectExistenteBaseProduto');
+      const nomeBaseProdutoEl = document.getElementById('nomeBaseProduto');
+      const codigoSKUBaseProdutoEl = document.getElementById('codigoSKUBaseProduto');
+      const categoriaPadraoBaseProdutoEl = document.getElementById('categoriaPadraoBaseProduto');
+      const marcaPadraoBaseProdutoEl = document.getElementById('marcaPadraoBaseProduto');
+      const fornecedorPadraoBaseProdutoEl = document.getElementById('fornecedorPadraoBaseProduto');
+      const descricaoBaseProdutoEl = document.getElementById('descricaoBaseProduto');
+      const observacoesBaseProdutoEl = document.getElementById('observacoesBaseProduto');
+      const submitBaseProductButton = document.getElementById('submitBaseProductButton');
+      const messageBaseProductDiv = document.getElementById('messageBaseProduct');
+      const nomeBaseProdutoDisplayEl = document.getElementById('nomeBaseProdutoDisplay');
+
+      // --- Elementos do DOM - Variantes ---
+      const sectionVariantesProdutoEl = document.getElementById('sectionVariantesProduto');
+      const variantForm = document.getElementById('variantFormHtml');
+      const variantIdField = document.getElementById('variantId');
+      const baseProductId_FK_Field = document.getElementById('baseProductId_FK'); // Para o form da variante
+      const formTitleVariantEl = document.getElementById('formTitleVariant');
+      const nomeCompletoVarianteEl = document.getElementById('nomeBaseProduto')
+      const corVarianteEl = document.getElementById('corVariante');
+      const tamanhoVarianteSelectEl = document.getElementById('tamanhoVariante');
+      const tamanhoVarianteTextoEl = document.getElementById('tamanhoVarianteTexto');
+      const etiquetaVarianteEl = document.getElementById('etiquetaVariante');
+      const precoUnitarioVarianteEl = document.getElementById('precoUnitarioVariante');
+      const observacoesVarianteEl = document.getElementById('observacoesVariante');
+      const submitVariantButton = document.getElementById('submitVariantButton');
+      const cancelEditVariantButton = document.getElementById('cancelEditVariantButton');
+      const messageVariantDiv = document.getElementById('messageVariant');
+      const variantsTableBodyEl = document.getElementById('variantsTableBody');
+      console.log(nomeCompletoVarianteEl)
+      let currentEditingBaseProductId = null; // ID do produto base atualmente em foco
+      let currentEditingVariantId = null; // ID da variante atualmente em edição no formulário de variante
+
+      // --- FUNÇÕES DE INICIALIZAÇÃO E PREENCHIMENTO DE DROPDOWNS ---
+      async function popularDropdownProdutosBase() {
+        try {
+          const produtosBase = await getBaseProductListAPI(); // Retorna [[ID, Nome_Base], ...]
+          selectExistenteBaseProdutoEl.innerHTML = '<option value="">Criar Novo Produto</option>';
+          if (produtosBase && produtosBase.length > 0) {
+            produtosBase.forEach(pb => {
+              selectExistenteBaseProdutoEl.add(new Option(pb[1] + ` (ID: ${pb[0]})`, pb[0]));
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar lista de produtos base:", error);
+          selectExistenteBaseProdutoEl.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+
+      async function popularDropdownCategorias() {
+        try {
+          const categorias = await getCategoriaListAPI(); // Retorna [[ID, Nome_Categoria], ...]
+          categoriaPadraoBaseProdutoEl.innerHTML = '<option value="">Selecione...</option>';
+          if (categorias && categorias.length > 0) {
+            categorias.forEach(cat => {
+              categoriaPadraoBaseProdutoEl.add(new Option(cat[1], cat[0]));
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar categorias:", error);
+          categoriaPadraoBaseProdutoEl.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+      
+      async function popularDropdownFornecedores() {
+        try {
+          const fornecedores = await getFornecedorListAPI(); // Retorna [[ID, Nome_Fantasia], ...]
+          fornecedorPadraoBaseProdutoEl.innerHTML = '<option value="">Selecione...</option>';
+          if (fornecedores && fornecedores.length > 0) {
+            fornecedores.forEach(forn => {
+              fornecedorPadraoBaseProdutoEl.add(new Option(forn[1], forn[0]));
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar fornecedores:", error);
+          fornecedorPadraoBaseProdutoEl.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+
+      // --- LÓGICA DE TAMANHO CONDICIONAL (para o formulário de variante) ---
+      function atualizarOpcoesDeTamanhoVariante(idCategoria) {
+        
+        tamanhoVarianteSelectEl.innerHTML = ''; 
+        tamanhoVarianteSelectEl.style.display = 'block';
+        tamanhoVarianteTextoEl.style.display = 'none';
+        tamanhoVarianteSelectEl.disabled = true;
+
+        // Simulando que temos o nome da categoria. O ideal é buscar da lista de categorias já carregada ou fazer uma chamada.
+        // Esta lógica precisa ser robusta. Você pode carregar as categorias com ID e Nome no início.
+        const categoriaSelecionadaObj = categoriaPadraoBaseProdutoEl.querySelector(`option[value="${idCategoria}"]`);
+        const nomeCategoria = categoriaSelecionadaObj ? categoriaSelecionadaObj.textContent : "";
+        
+        console.log("Atualizando tamanhos para categoria (ID/Nome):", idCategoria, nomeCategoria);
+
+        if (nomeCategoria.toLowerCase().includes("sapato")) {
+          tamanhoVarianteSelectEl.add(new Option("Selecione...", ""));
+          for (let i = 36; i <= 42; i++) tamanhoVarianteSelectEl.add(new Option(i.toString(), i.toString()));
+          tamanhoVarianteSelectEl.disabled = false;
+        } else if (nomeCategoria.toLowerCase().includes("roupa")) {
+          tamanhoVarianteSelectEl.add(new Option("Selecione...", ""));
+          ["PP", "P", "M", "G", "GG"].forEach(t => tamanhoVarianteSelectEl.add(new Option(t, t)));
+          tamanhoVarianteSelectEl.disabled = false;
+        } else if (nomeCategoria.toLowerCase().includes("acessório") || nomeCategoria.toLowerCase().includes("acessorio")) {
+          tamanhoVarianteSelectEl.style.display = 'none';
+          tamanhoVarianteTextoEl.style.display = 'block';
+          tamanhoVarianteTextoEl.value = "Tamanho Único";
+        } else if (idCategoria) {
+          tamanhoVarianteSelectEl.add(new Option("Não aplicável", "N/A"));
+          // ou permitir input de texto livre para tamanho se a categoria não tiver tamanhos predefinidos.
+        } else {
+          tamanhoVarianteSelectEl.add(new Option("Selecione a categoria do Produto Base", ""));
+        }
+      }
+
+      // --- FUNÇÕES PARA PRODUTO BASE ---
+      function resetFormularioBaseProduto() {
+        baseProductForm.reset();
+        baseProductIdField.value = "";
+        selectExistenteBaseProdutoEl.value = "";
+        submitBaseProductButton.textContent = "Salvar Produto";
+        formTitleProdutoGerenciamento.textContent = "Gerenciar Produto e Suas Caracteristicas";
+        currentEditingBaseProductId = null;
+        sectionVariantesProdutoEl.style.display = 'none';
+        nomeBaseProdutoDisplayEl.textContent = "";
+        if (variantsTableBodyEl) variantsTableBodyEl.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma variante para este produto base ou produto base não selecionado.</td></tr>';
+        resetFormularioVariante(); // Reseta o form de variante também
+      }
+
+      async function carregarDetalhesBaseProduto(id) {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        resetFormularioBaseProduto(); // Limpa antes de carregar
+        try {
+          const details = await getBaseProductDetailsByIdAPI(id);
+          if (details && details.iDBaseProduto) {
+            selectExistenteBaseProdutoEl.value = details.iDBaseProduto;
+            baseProductIdField.value = details.iDBaseProduto;
+            nomeBaseProdutoEl.value = details.nomeBase || '';
+            codigoSKUBaseProdutoEl.value = details.codigoSKUBase || '';
+            categoriaPadraoBaseProdutoEl.value = details.categoriaPadrao || ''; // Categoria_Padrao armazena o ID
+            marcaPadraoBaseProdutoEl.value = details.marcaPadrao || '';
+            fornecedorPadraoBaseProdutoEl.value = details.fornecedorPadrao || ''; // Fornecedor_Padrao armazena o ID
+            descricaoBaseProdutoEl.value = details.descricaoBase || '';
+            observacoesBaseProdutoEl.value = details.observacoesBase || '';
+            
+            formTitleProdutoGerenciamento.textContent = `Editando Produto Base: ${details.nomeBase} (ID: ${details.iDBaseProduto})`;
+            submitBaseProductButton.textContent = "Atualizar Produto";
+            currentEditingBaseProductId = details.iDBaseProduto;
+            
+            nomeBaseProdutoDisplayEl.textContent = details.nomeBase;
+            sectionVariantesProdutoEl.style.display = 'block';
+            baseProductId_FK_Field.value = currentEditingBaseProductId; // Preenche o FK no form de variante
+            atualizarOpcoesDeTamanhoVariante(details.categoriaPadrao); // Atualiza tamanhos para as variantes
+            carregarVariantesDoProdutoBase(currentEditingBaseProductId);
+          } else {
+            messageBaseProductDiv.textContent = "Produto Base não encontrado.";
+            messageBaseProductDiv.className = 'message-feedback error';
+            messageBaseProductDiv.style.display = 'block';
+          }
+        } catch (error) {
+          console.error("Erro ao carregar Produto Base:", error);
+          messageBaseProductDiv.textContent = "Erro ao carregar Produto Base: " + error.message;
+          messageBaseProductDiv.className = 'message-feedback error';
+          messageBaseProductDiv.style.display = 'block';
+        } finally {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+      }
+
+      // --- FUNÇÕES PARA VARIANTES ---
+      function resetFormularioVariante() {
+        variantForm.reset();
+        variantIdField.value = "";
+        currentEditingVariantId = null;
+        formTitleVariantEl.textContent = "Adicionar Nova Caracteristica";
+        submitVariantButton.textContent = "Adicionar Caracteristica";
+        cancelEditVariantButton.style.display = 'none';
+        // Mantém baseProductId_FK_Field preenchido se um produto base estiver ativo
+        if(currentEditingBaseProductId) {
+            const categoriaDoBase = categoriaPadraoBaseProdutoEl.value;
+            atualizarOpcoesDeTamanhoVariante(categoriaDoBase);
+        } else {
+            tamanhoVarianteSelectEl.innerHTML = '<option value="">Selecione a categoria do Produto Base</option>';
+            tamanhoVarianteSelectEl.disabled = true;
+        }
+
+      }
+
+      async function carregarVariantesDoProdutoBase(idBase) {
+        if (!variantsTableBodyEl) return;
+        variantsTableBodyEl.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando Caracteristicas...</td></tr>';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+          const variantes = await getVariantsByBaseProductIdAPI(idBase);
+          variantsTableBodyEl.innerHTML = '';
+          if (variantes && variantes.length > 0) {
+            variantes.forEach(v => {
+              const row = variantsTableBodyEl.insertRow();
+              row.insertCell().textContent = v.iDVariante;
+              row.insertCell().textContent = v.nomeCompletoVariante;
+              row.insertCell().textContent = v.cor || '-';
+              row.insertCell().textContent = v.tamanho || '-';
+              row.insertCell().textContent = parseFloat(v.precoUnitario || 0).toFixed(2);
+              row.insertCell().textContent = v.estoqueAtual || '0'; // Estoque é fórmula, vem como string de display
+              
+              const cellAcoes = row.insertCell();
+              const btnEditarVar = document.createElement('button');
+              btnEditarVar.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit;vertical-align:text-bottom;"></span> Editar';
+              btnEditarVar.className = 'btn-table-action edit btn-sm';
+              btnEditarVar.onclick = () => preencherFormularioVarianteParaEdicao(v);
+              cellAcoes.appendChild(btnEditarVar);
+
+              const btnExcluirVar = document.createElement('button');
+              btnExcluirVar.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit;vertical-align:text-bottom;"></span> Excluir';
+              btnExcluirVar.className = 'btn-table-action danger btn-sm';
+              btnExcluirVar.onclick = () => excluirVariante(v.iDVariante, v.nomeCompletoVariante, idBase);
+              cellAcoes.appendChild(btnExcluirVar);
+            });
+          } else {
+            variantsTableBodyEl.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma variante cadastrada para este produto.</td></tr>';
+          }
+        } catch (error) {
+          console.error("Erro ao carregar variantes:", error);
+          variantsTableBodyEl.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Erro ao carregar variantes.</td></tr>';
+        } finally {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+      }
+      
+      function preencherFormularioVarianteParaEdicao(variantDetails) {
+        variantIdField.value = variantDetails.iDVariante;
+        baseProductId_FK_Field.value = variantDetails.iDBaseProdutoFK; // Já deve estar preenchido
+        nomeCompletoVarianteEl.value = variantDetails.nomeCompletoVariante || '';
+        corVarianteEl.value = variantDetails.cor || '';
+        // Para tamanho, precisamos da categoria do produto base para preencher as opções corretas
+        const categoriaDoBase = categoriaPadraoBaseProdutoEl.value; 
+        atualizarOpcoesDeTamanhoVariante(categoriaDoBase); // Atualiza as opções
+        if (categoriaDoBase.toLowerCase().includes("acessório")) { // Verifica se a categoria é acessório
+            tamanhoVarianteTextoEl.value = variantDetails.tamanho || "Tamanho Único";
+        } else {
+            tamanhoVarianteSelectEl.value = variantDetails.tamanho || ''; // Então define o valor
+        }
+
+        etiquetaVarianteEl.value = variantDetails.etiquetaVariante || '';
+        precoUnitarioVarianteEl.value = parseFloat(variantDetails.precoUnitario || 0).toFixed(2);
+        observacoesVarianteEl.value = variantDetails.observacoesVariante || '';
+
+        formTitleVariantEl.textContent = "Editar Variante (ID: " + variantDetails.iDVariante + ")";
+        submitVariantButton.textContent = "Atualizar Variante";
+        cancelEditVariantButton.style.display = 'inline-block';
+        currentEditingVariantId = variantDetails.iDVariante;
+        nomeCompletoVarianteEl.focus();
+      }
+
+      async function excluirVariante(idVariante, nomeVariante, idBaseProduto) {
+        if (confirm(`Tem certeza que deseja excluir a variante "${nomeVariante}" (ID: ${idVariante})?`)) {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+          try {
+            const response = await deleteVariantProductAPI(idVariante);
+            messageVariantDiv.textContent = response.message;
+            messageVariantDiv.className = response.status === 'success' ? 'message-feedback success' : 'message-feedback error';
+            messageVariantDiv.style.display = 'block';
+            if (response.status === 'success') {
+              carregarVariantesDoProdutoBase(idBaseProduto); // Recarrega a lista de variantes
+            }
+          } catch (error) {
+            messageVariantDiv.textContent = "Erro ao excluir variante: " + error.message;
+            messageVariantDiv.className = 'message-feedback error';
+            messageVariantDiv.style.display = 'block';
+          } finally {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if(messageVariantDiv) messageVariantDiv.style.display = 'none'; }, 5000);
+          }
+        }
+      }
+
+      // --- EVENT LISTENERS ---
+      if (selectExistenteBaseProdutoEl) {
+        selectExistenteBaseProdutoEl.addEventListener('change', function() {
+          const selectedId = this.value;
+          if (selectedId) {
+            carregarDetalhesBaseProduto(selectedId);
+          } else {
+            resetFormularioBaseProduto();
+          }
+        });
+      }
+      
+      // Atualizar opções de tamanho da variante quando a categoria do produto base muda
+      if(categoriaPadraoBaseProdutoEl) {
+          categoriaPadraoBaseProdutoEl.addEventListener('change', function() {
+              atualizarOpcoesDeTamanhoVariante(this.value);
+          });
+      }
+
+
+      if (baseProductForm) {
+        baseProductForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          if(submitBaseProductButton.disabled) return;
+
+          submitBaseProductButton.disabled = true;
+          submitBaseProductButton.textContent = baseProductIdField.value ? 'Atualizando Base...' : 'Salvando Base...';
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+          const data = {
+            Nome_Base: nomeBaseProdutoEl.value,
+            Codigo_SKU_Base: codigoSKUBaseProdutoEl.value,
+            Categoria_Padrao: categoriaPadraoBaseProdutoEl.value, // Envia o ID da Categoria
+            Marca_Padrao: marcaPadraoBaseProdutoEl.value,
+            Fornecedor_Padrao: fornecedorPadraoBaseProdutoEl.value, // Envia o ID do Fornecedor
+            Descricao_Base: descricaoBaseProdutoEl.value,
+            Observacoes_Base: observacoesBaseProdutoEl.value
+          };
+          const idToUpdate = baseProductIdField.value || null;
+
+          try {
+            const response = await saveBaseProductAPI(data, idToUpdate);
+            messageBaseProductDiv.textContent = response.message;
+            messageBaseProductDiv.className = response.status === 'success' ? 'message-feedback success' : 'message-feedback error';
+            messageBaseProductDiv.style.display = 'block';
+
+            if (response.status === 'success' && response.baseProductId) {
+              currentEditingBaseProductId = response.baseProductId;
+              baseProductIdField.value = response.baseProductId;
+              selectExistenteBaseProdutoEl.value = response.baseProductId; // Atualiza o select se o item foi recém-criado
+              
+              // Se foi um novo produto base, atualiza a lista no select
+              if (!idToUpdate) {
+                popularDropdownProdutosBase(); // Recarrega para incluir o novo
+                selectExistenteBaseProdutoEl.value = response.baseProductId;
+              }
+              
+              formTitleProdutoGerenciamento.textContent = `Editando Produto Base: ${data.Nome_Base} (ID: ${response.baseProductId})`;
+              submitBaseProductButton.textContent = "Atualizar Produto Base";
+              nomeBaseProdutoDisplayEl.textContent = data.Nome_Base;
+              sectionVariantesProdutoEl.style.display = 'block';
+              baseProductId_FK_Field.value = currentEditingBaseProductId;
+              atualizarOpcoesDeTamanhoVariante(data.Categoria_Padrao);
+              carregarVariantesDoProdutoBase(currentEditingBaseProductId);
+              resetFormularioVariante();
+            }
+          } catch (error) {
+            messageBaseProductDiv.textContent = "Erro ao salvar Produto Base: " + error.message;
+            messageBaseProductDiv.className = 'message-feedback error';
+            messageBaseProductDiv.style.display = 'block';
+          } finally {
+            submitBaseProductButton.disabled = false;
+            submitBaseProductButton.textContent = baseProductIdField.value ? 'Atualizar Produto Base' : 'Salvar Produto Base';
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if(messageBaseProductDiv) messageBaseProductDiv.style.display = 'none'; }, 5000);
+          }
+        });
+      }
+
+      if (variantForm) {
+        variantForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          if(submitVariantButton.disabled) return;
+
+          if (!currentEditingBaseProductId) {
+            messageVariantDiv.textContent = "Selecione ou salve um Produto Base antes de adicionar variantes.";
+            messageVariantDiv.className = 'message-feedback error';
+            messageVariantDiv.style.display = 'block';
+            setTimeout(() => { if(messageVariantDiv) messageVariantDiv.style.display = 'none'; }, 5000);
+            return;
+          }
+
+          submitVariantButton.disabled = true;
+          submitVariantButton.textContent = variantIdField.value ? 'Atualizando Variante...' : 'Adicionando Variante...';
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+          let tamanhoValor;
+          const categoriaDoBaseSelecionada = categoriaPadraoBaseProdutoEl.options[categoriaPadraoBaseProdutoEl.selectedIndex]?.text || "";
+          if (categoriaDoBaseSelecionada.toLowerCase().includes("acessório")) {
+              tamanhoValor = tamanhoVarianteTextoEl.value;
+          } else {
+              tamanhoValor = tamanhoVarianteSelectEl.value;
+          }
+          
+          const data = {
+            ID_Base_Produto_FK: currentEditingBaseProductId,
+            Nome_Completo_Variante: nomeCompletoVarianteEl.value + " - "+ corVarianteEl.value + " - "+ tamanhoValor,
+            Cor: corVarianteEl.value,
+            Tamanho: tamanhoValor,
+            Etiqueta_Variante: etiquetaVarianteEl.value,
+            Preco_Unitario: parseFloat(precoUnitarioVarianteEl.value),
+            Observacoes_Variante: observacoesVarianteEl.value
+          };
+          const idToUpdate = variantIdField.value || null;
+
+          try {
+            const response = await saveVariantProductAPI(data, idToUpdate);
+            messageVariantDiv.textContent = response.message;
+            messageVariantDiv.className = response.status === 'success' ? 'message-feedback success' : 'message-feedback error';
+            messageVariantDiv.style.display = 'block';
+
+            if (response.status === 'success') {
+              resetFormularioVariante();
+              carregarVariantesDoProdutoBase(currentEditingBaseProductId);
+            }
+          } catch (error) {
+            messageVariantDiv.textContent = "Erro ao salvar Variante: " + error.message;
+            messageVariantDiv.className = 'message-feedback error';
+            messageVariantDiv.style.display = 'block';
+          } finally {
+            submitVariantButton.disabled = false;
+            // Texto do botão já é resetado em resetFormularioVariante
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if(messageVariantDiv) messageVariantDiv.style.display = 'none'; }, 5000);
+          }
+        });
+      }
+
+      if(cancelEditVariantButton) {
+          cancelEditVariantButton.addEventListener('click', function() {
+              resetFormularioVariante();
+          });
+      }
+
+      // --- CARREGAMENTO INICIAL ---
+      async function initPage() {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        await Promise.all([
+            popularDropdownProdutosBase(),
+            popularDropdownCategorias(),
+            popularDropdownFornecedores()
+        ]);
+
+        // Se um ID de produto base foi passado para edição (ex: window.baseProductIdToEdit)
+        if (window.baseProductIdToLoad) { // Usar uma variável específica para carregar na inicialização
+            selectExistenteBaseProdutoEl.value = window.baseProductIdToLoad; // Tenta selecionar no dropdown
+            await carregarDetalhesBaseProduto(window.baseProductIdToLoad);
+            window.baseProductIdToLoad = null; // Limpa para não interferir
+        } else {
+            resetFormularioBaseProduto(); // Garante estado limpo
+        }
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+
+      initPage();
+
+    })();
+
+    function gerarNomeCompletoVariante() {
+  let tamanhoValor;
+  const categoriaDoBaseSelecionada = categoriaPadraoBaseProdutoEl.options[categoriaPadraoBaseProdutoEl.selectedIndex]?.text || "";
+  if (categoriaDoBaseSelecionada.toLowerCase().includes("acessório")) {
+    tamanhoValor = tamanhoVarianteTextoEl.value;
+  } else {
+    tamanhoValor = tamanhoVarianteSelectEl.value;
+  }
+  
+  return nomeBaseProdutoEl.value + " " + tamanhoValor + " " + corVarianteEl.value;
+}
+  </script>
+</body>
+</html>

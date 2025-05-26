@@ -1,0 +1,153 @@
+ <!DOCTYPE html>
+ <html lang="pt-br" class="login-html"> 
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Le Duo Chic</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+ </head>
+ <body class="login-body"> 
+  <div class="login-container">
+   <div class="login-form">
+    <div class="user-icon">
+     <img src="/pages/img/logo_rosa_transparente.png" alt="Le Duo Chic Logo" style="width: 150px; ">
+    </div>
+    <h2>Bem-vinda(o)</h2> 
+    <form id="actualLoginForm"> 
+        <div class="input-group">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" name="username" placeholder="Seu usuário" required>
+        </div>
+        <div class="input-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" placeholder="Sua senha" required>
+        </div>
+        <div class="form-actions">
+        <label class="remember-me">
+            <input type="checkbox" id="rememberMe" name="remember"> Lembrar-me
+        </label>
+        <a href="#" class="forgot-password">Esqueci a senha?</a>
+        </div>
+        <button type="submit" id="loginButton" class="btn-primary">Entrar</button>
+    </form>
+    <div id="login-message" class="message-feedback" style="display:none;"></div>
+   </div>
+  </div>
+
+  <script src="js/api.js"></script> 
+  <script>
+   const loginForm = document.getElementById('actualLoginForm');
+   const loginButton = document.getElementById('loginButton');
+   const messageDiv = document.getElementById('login-message');
+
+   function showGlobalLoadingLogin(show) {
+       const overlay = document.getElementById('globalLoadingOverlay'); 
+       if (overlay) {
+           overlay.style.display = show ? 'flex' : 'none';
+       } else if (document.body && show) { 
+            let tempOverlay = document.createElement('div');
+            tempOverlay.id = 'tempLoadingOverlay';
+            tempOverlay.style.position = 'fixed';
+            tempOverlay.style.top = '0';
+            tempOverlay.style.left = '0';
+            tempOverlay.style.width = '100%';
+            tempOverlay.style.height = '100%';
+            tempOverlay.style.backgroundColor = 'rgba(200,200,200,0.5)';
+            tempOverlay.style.display = 'flex';
+            tempOverlay.style.justifyContent = 'center';
+            tempOverlay.style.alignItems = 'center';
+            tempOverlay.style.zIndex = '10000';
+            tempOverlay.innerHTML = '<p style="background:white; padding:20px; border-radius:5px;">Carregando...</p>';
+            document.body.appendChild(tempOverlay);
+       } else if (!show) {
+            let tempOverlay = document.getElementById('tempLoadingOverlay');
+            if (tempOverlay) tempOverlay.remove();
+       }
+   }
+
+   async function checkExistingSession() {
+       const sessionId = localStorage.getItem('userSessionId');
+       if (sessionId) {
+           console.log("Login Page: Verificando sessão existente com ID:", sessionId);
+           showGlobalLoadingLogin(true);
+           try {
+               const sessionData = await checkSessionAPI(sessionId); 
+               console.log("Login Page: Resposta do checkSessionAPI:", sessionData);
+               if (sessionData && sessionData.isLoggedIn) {
+                   console.log("Login Page: Sessão válida encontrada. Redirecionando para dashboard...");
+                   window.location.href = 'dashboard.html';
+               } else {
+                   console.log("Login Page: Sessão inválida ou expirada no backend. Removendo do localStorage.");
+                   localStorage.removeItem('userSessionId');
+                   localStorage.removeItem('userData');
+               }
+           } catch (error) {
+               console.error("Login Page: Erro ao verificar sessão:", error.message);
+               localStorage.removeItem('userSessionId');
+               localStorage.removeItem('userData');
+           } finally {
+              showGlobalLoadingLogin(false);
+           }
+       } else {
+        console.log("Login Page: Nenhuma sessão encontrada no localStorage.");
+       }
+   }
+   
+   checkExistingSession(); 
+
+   if (loginForm) {
+       loginForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        if (loginButton) {
+            loginButton.disabled = true;
+            loginButton.textContent = 'A entrar...';
+        }
+        showGlobalLoadingLogin(true);
+
+        try {
+            const response = await loginAPI(usernameInput.value, passwordInput.value); 
+            console.log("Login Page: Resposta do loginAPI:", response);
+            
+            if (response.status === "success" && response.user && response.user.sessionId) {
+             messageDiv.textContent = 'Login realizado com sucesso! A redirecionar...';
+             messageDiv.className = 'message-feedback success';
+             messageDiv.style.display = 'block';
+             
+             localStorage.setItem('userSessionId', response.user.sessionId);
+             localStorage.setItem('userData', JSON.stringify(response.user)); // response.user já deve ter sessionId, nomeCompleto, etc.
+             console.log("Login Page: userSessionId salvo no localStorage:", localStorage.getItem('userSessionId'));
+             console.log("Login Page: userData salvo no localStorage:", localStorage.getItem('userData'));
+
+             setTimeout(() => {
+              window.location.href = 'dashboard.html'; 
+             }, 1500);
+            } else {
+             messageDiv.textContent = response.message || 'Usuário ou senha incorretos.';
+             messageDiv.className = 'message-feedback error';
+             messageDiv.style.display = 'block';
+             setTimeout(() => { messageDiv.style.display = 'none';}, 3000);
+            }
+        } catch (error) {
+            messageDiv.textContent = 'Erro ao tentar fazer login: ' + (error.message || "Erro desconhecido.");
+            messageDiv.className = 'message-feedback error';
+            messageDiv.style.display = 'block';
+            console.error("Login Page: Erro na API de login:", error);
+            setTimeout(() => { messageDiv.style.display = 'none';}, 3000);
+        } finally {
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Entrar';
+            }
+            showGlobalLoadingLogin(false);
+        }
+       });
+   } else {
+    console.error("Formulário de login 'actualLoginForm' não encontrado.");
+   }
+  </script>
+ </body>
+ </html>

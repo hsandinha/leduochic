@@ -1,0 +1,334 @@
+<div class="page-content-wrapper">
+  <div class="form-container">
+    <h2 id="formTitlePedido" class="text-2xl font-semibold text-gray-700 mb-6">Novo Pedido</h2> <form id="orderFormHtml"> <div class="form-grid">
+        <div>
+          <label for="dataPedido">Data do Pedido:</label>
+          <input type="date" id="dataPedido" name="dataPedido" required readonly>
+        </div>
+        <div>
+          <label for="clienteId">Cliente:</label>
+          <select id="clienteId" name="clienteId" required>
+            <option value="">Selecione um cliente...</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Itens do Pedido</h3>
+      <div id="orderItemsContainer" class="mb-4 table-container">
+        <table id="orderItemsTable">
+          <thead>
+            <tr>
+              <th>Produto (Estoque)</th>
+              <th>Qtd.</th>
+              <th>Val. Unit. (R$)</th>
+              <th>Subtotal (R$)</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            </tbody>
+        </table>
+      </div>
+      <button type="button" id="addItemButton" class="btn-action-form">Adicionar Item</button>
+
+      <div class="form-grid"> 
+        <div>
+          <label for="formaPagamento">Forma de Pagamento:</label> 
+          <select id="formaPagamento" name="formaPagamento" required>
+            <option value="">Selecione...</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
+            <option value="PIX">PIX</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div>
+          <label for="valorTotalPedido">Valor Total do Pedido (R$):</label>
+          <input type="number" id="valorTotalPedido" name="valorTotalPedido" readonly class="bg-gray-100">
+        </div>
+      </div>
+      
+      <div>
+        <label for="observacoesPedido">Observações do Pedido:</label>
+        <textarea id="observacoesPedido" name="observacoesPedido" rows="3"></textarea>
+      </div>
+      
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button type="submit" id="submitOrderButton">
+          Salvar Pedido
+        </button>
+      </div>
+    </form>
+    <div id="messageOrderForm" class="message-feedback" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+  // Script específico para pedido_form.html
+  (function() { // IIFE para encapsular o escopo
+    console.log("Script de pedido_form.html executando.");
+    let productListCacheForm = []; 
+    const orderForm = document.getElementById('orderFormHtml');
+    const addItemButton = document.getElementById('addItemButton');
+    const messageDivOrder = document.getElementById('messageOrderForm');
+    const submitOrderButton = document.getElementById('submitOrderButton');
+    const dataPedidoEl = document.getElementById('dataPedido');
+
+    async function carregarClientesForm() {
+      console.log("pedido_form: chamando getClientListAPI");
+      if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+      try {
+        const clientes = await getClientListAPI(); // Chama a função da api.js
+        const selectCliente = document.getElementById('clienteId');
+        if (!selectCliente) { console.error("Elemento clienteId não encontrado."); return; }
+        selectCliente.innerHTML = '<option value="">Selecione um cliente...</option>';
+        if (clientes && clientes.length > 0) {
+          clientes.forEach(function(cliente) { 
+            const option = new Option(cliente[1], cliente[0]); 
+            selectCliente.add(option);
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao carregar clientes (API): " + err.message);
+        if(messageDivOrder) {
+            messageDivOrder.textContent = 'Erro ao carregar clientes: ' + err.message;
+            messageDivOrder.className = 'message-feedback error';
+            messageDivOrder.style.display = 'block';
+        }
+      } finally {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+
+    async function carregarProdutosParaPedidoForm() {
+      if (productListCacheForm.length > 0) {
+        return productListCacheForm;
+      }
+      console.log("pedido_form: chamando getProductListAPI");
+      if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+      try {
+        const produtos = await getProductListAPI(); // Chama a função da api.js
+        if (produtos && produtos.length > 0) {
+          productListCacheForm = produtos; 
+          return produtos;
+        }
+        return [];
+      } catch (err) {
+        console.error("Erro ao carregar produtos para pedido (API): " + err.message);
+        if(messageDivOrder) {
+            messageDivOrder.textContent = 'Erro ao carregar lista de produtos: ' + err.message;
+            messageDivOrder.className = 'message-feedback error';
+            messageDivOrder.style.display = 'block';
+        }
+        throw err; 
+      } finally {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    if (addItemButton) {
+        addItemButton.addEventListener('click', async function() {
+            try {
+                if (productListCacheForm.length === 0) {
+                    await carregarProdutosParaPedidoForm(); 
+                }
+                if (productListCacheForm.length === 0) {
+                    if(messageDivOrder) {
+                        messageDivOrder.textContent = 'Nenhum produto disponível para adicionar.';
+                        messageDivOrder.className = 'message-feedback error';
+                        messageDivOrder.style.display = 'block';
+                         setTimeout(() => { if(messageDivOrder) messageDivOrder.style.display = 'none';}, 4000);
+                    }
+                    return;
+                }
+
+                const itemsTableBody = document.getElementById('orderItemsTable').getElementsByTagName('tbody')[0];
+                const newRow = itemsTableBody.insertRow();
+                newRow.className = 'item-row';
+
+                const cellProduto = newRow.insertCell();
+                const selectProduto = document.createElement('select');
+                selectProduto.className = 'produto-select';
+                selectProduto.innerHTML = '<option value="">Selecione...</option>';
+                
+                const stockInfoSpan = document.createElement('div'); 
+                stockInfoSpan.className = 'stock-info'; 
+                cellProduto.appendChild(selectProduto);
+                cellProduto.appendChild(stockInfoSpan); 
+
+                productListCacheForm.forEach(produto => { 
+                    const option = new Option(`${produto[1]} (R$ ${parseFloat(produto[2] || 0).toFixed(2)})`, produto[0]);
+                    option.dataset.price = produto[2] || 0; 
+                    option.dataset.stock = produto[3] || 0; 
+                    selectProduto.add(option);
+                });
+                selectProduto.onchange = function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const unitPriceInput = this.closest('.item-row').querySelector('.valor-unitario');
+                    const currentStock = selectedOption.dataset.stock || 'N/D';
+                    stockInfoSpan.textContent = `Estoque: ${currentStock}`; 
+                    unitPriceInput.value = parseFloat(selectedOption.dataset.price || 0).toFixed(2);
+                    calcularSubtotal(this.closest('.item-row'));
+                    calcularTotalPedido();
+                };
+                
+                const cellQuantidade = newRow.insertCell();
+                const inputQuantidade = document.createElement('input');
+                inputQuantidade.type = 'number';
+                inputQuantidade.className = 'quantidade-item';
+                inputQuantidade.min = '1';
+                inputQuantidade.value = '1';
+                inputQuantidade.oninput = function() { calcularSubtotal(this.closest('.item-row')); calcularTotalPedido(); };
+                cellQuantidade.appendChild(inputQuantidade);
+
+                const cellValorUnitario = newRow.insertCell();
+                const inputValorUnitario = document.createElement('input');
+                inputValorUnitario.type = 'number';
+                inputValorUnitario.className = 'valor-unitario'; 
+                inputValorUnitario.step = '0.01';
+                inputValorUnitario.readOnly = true; 
+                cellValorUnitario.appendChild(inputValorUnitario);
+
+                const cellSubtotal = newRow.insertCell();
+                const inputSubtotal = document.createElement('input');
+                inputSubtotal.type = 'number';
+                inputSubtotal.className = 'subtotal-item'; 
+                inputSubtotal.readOnly = true;
+                cellSubtotal.appendChild(inputSubtotal);
+                
+                const cellAcao = newRow.insertCell(); 
+                const btnRemover = document.createElement('button');
+                btnRemover.type = 'button';
+                btnRemover.textContent = 'Remover';
+                btnRemover.className = 'btn-table-action danger';
+                btnRemover.onclick = function() { this.closest('tr').remove(); calcularTotalPedido(); };
+                cellAcao.appendChild(btnRemover); 
+
+            } catch (error) {
+                console.error("Erro ao adicionar item:", error);
+                if(messageDivOrder) {
+                    messageDivOrder.textContent = 'Falha ao carregar produtos para adicionar item: ' + error.message;
+                    messageDivOrder.className = 'message-feedback error';
+                    messageDivOrder.style.display = 'block';
+                }
+            }
+        });
+    } else {
+        console.warn("Botão 'addItemButton' não encontrado.");
+    }
+
+    function calcularSubtotal(row) {
+      const quantidade = parseFloat(row.querySelector('.quantidade-item').value) || 0;
+      const valorUnitario = parseFloat(row.querySelector('.valor-unitario').value) || 0;
+      const subtotalInput = row.querySelector('.subtotal-item');
+      subtotalInput.value = (quantidade * valorUnitario).toFixed(2);
+    }
+
+    function calcularTotalPedido() {
+      let total = 0;
+      const items = document.querySelectorAll('#orderItemsTable tbody tr');
+      items.forEach(row => {
+        const subtotal = parseFloat(row.querySelector('.subtotal-item').value) || 0;
+        total += subtotal;
+      });
+      const valorTotalPedidoEl = document.getElementById('valorTotalPedido');
+      if (valorTotalPedidoEl) valorTotalPedidoEl.value = total.toFixed(2);
+    }
+    
+    // Inicialização do formulário
+    if (dataPedidoEl) {
+        dataPedidoEl.value = new Date().toISOString().split('T')[0];
+    }
+    carregarClientesForm();
+    carregarProdutosParaPedidoForm().catch(err => console.error("Erro inicial ao carregar produtos para pedido (no onload):", err));
+
+    if (orderForm) {
+        orderForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (submitOrderButton) {
+                submitOrderButton.disabled = true;
+                submitOrderButton.textContent = 'Salvando Pedido...';
+            }
+            if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+            const items = [];
+            const itemRows = document.querySelectorAll('#orderItemsTable tbody tr');
+            itemRows.forEach(row => {
+                const produtoSelect = row.querySelector('.produto-select');
+                const quantidadeInput = row.querySelector('.quantidade-item');
+                const valorUnitarioInput = row.querySelector('.valor-unitario');
+                
+                if (produtoSelect && produtoSelect.value && quantidadeInput && quantidadeInput.value) {
+                    items.push({
+                        productId: produtoSelect.value,
+                        productName: produtoSelect.options[produtoSelect.selectedIndex].text.split(' (R$')[0], 
+                        quantity: parseInt(quantidadeInput.value),
+                        unitPrice: parseFloat(valorUnitarioInput.value)
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                if(messageDivOrder) {
+                    messageDivOrder.textContent = 'Adicione pelo menos um item ao pedido.';
+                    messageDivOrder.className = 'message-feedback error';
+                    messageDivOrder.style.display = 'block';
+                }
+                if (submitOrderButton) {
+                    submitOrderButton.disabled = false;
+                    submitOrderButton.textContent = 'Salvar Pedido';
+                }
+                if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                return;
+            }
+
+            const orderData = {
+                dataPedido: document.getElementById('dataPedido').value,
+                clienteId: document.getElementById('clienteId').value,
+                formaPagamento: document.getElementById('formaPagamento').value, 
+                observacoesPedido: document.getElementById('observacoesPedido').value,
+                valorTotalPedido: parseFloat(document.getElementById('valorTotalPedido').value),
+                items: items
+            };
+
+            console.log("Enviando dados do pedido (API):", orderData); 
+
+            try {
+                const response = await saveOrderAPI(orderData); // Chama a função da api.js
+                if(messageDivOrder) {
+                    messageDivOrder.textContent = response.message;
+                    messageDivOrder.style.display = 'block';
+                    messageDivOrder.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                }
+                if (response.status === "success") {
+                    orderForm.reset(); // Limpa o formulário
+                    const itemsTableBody = document.getElementById('orderItemsTable').getElementsByTagName('tbody')[0];
+                    if (itemsTableBody) itemsTableBody.innerHTML = ''; 
+                    if(dataPedidoEl) dataPedidoEl.value = new Date().toISOString().split('T')[0]; 
+                    calcularTotalPedido(); 
+                }
+            } catch (error) {
+                if(messageDivOrder) {
+                    messageDivOrder.textContent = 'Erro ao salvar pedido: ' + error.message;
+                    messageDivOrder.className = 'message-feedback error';
+                    messageDivOrder.style.display = 'block';
+                }
+                console.error("Erro da API ao salvar pedido:", error);
+            } finally {
+                if (submitOrderButton) {
+                    submitOrderButton.disabled = false;
+                    submitOrderButton.textContent = 'Salvar Pedido';
+                }
+                if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                setTimeout(() => { if(messageDivOrder) messageDivOrder.style.display = 'none';}, 4000);
+            }
+        });
+    } else {
+        console.error("Formulário 'orderFormHtml' não encontrado.");
+    }
+  })(); 
+  </script>
+</body>
+</html>

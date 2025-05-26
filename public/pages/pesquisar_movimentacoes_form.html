@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="formTitleListarMov" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Pesquisar Movimentações de Estoque</h2>
+        <button type="button" id="btnNovaMovimentacao" class="btn-action-form">
+          Nova Movimentação
+        </button>
+      </div>
+      <form id="filterStockMovementFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-3">
+          <div>
+            <label for="filterStartDateMov">Data Inicial:</label>
+            <input type="date" id="filterStartDateMov" name="filterStartDate">
+          </div>
+          <div>
+            <label for="filterEndDateMov">Data Final:</label>
+            <input type="date" id="filterEndDateMov" name="filterEndDate">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Filtrar</button> 
+            </div>
+        </div>
+      </form>
+      
+      <div id="loadingMessageListMov" class="message-feedback" style="display:none;">Carregando movimentações...</div>
+      <div id="errorMessageListMov" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessageListMov" class="message-feedback" style="display:none;">Nenhuma movimentação encontrada.</div>
+
+      <div class="table-container">
+        <table id="movementsTableList">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Produto (Variante)</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Descrição</th>
+              </tr>
+          </thead>
+          <tbody id="tbodyMovementsTable"> </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() { 
+    console.log("Script de pesquisar_movimentacoes_form.html a executar."); // Nome do arquivo atualizado no log
+    const filterStockMovementForm = document.getElementById('filterStockMovementFormHtml');
+    const loadingMessageEl = document.getElementById('loadingMessageListMov');
+    const errorMessageEl = document.getElementById('errorMessageListMov');
+    const noResultsMessageEl = document.getElementById('noResultsMessageListMov');
+    const movementsTableEl = document.getElementById('movementsTableList');
+    const tbody = document.getElementById('tbodyMovementsTable'); // Usando o ID novo/corrigido
+    const btnNovaMovimentacao = document.getElementById('btnNovaMovimentacao'); // NOVO BOTÃO
+
+    function displayMovements(movements) {
+      console.log("pesquisar_movimentacoes_form: displayMovements chamada. Dados:", JSON.stringify(movements));
+      if (!tbody) {
+        console.error("Elemento tbody da tabela de movimentações não encontrado.");
+        if(errorMessageEl) {
+            errorMessageEl.textContent = "Erro interno: Tabela de movimentações não encontrada.";
+            errorMessageEl.className = 'message-feedback error';
+            errorMessageEl.style.display = 'block';
+        }
+        return;
+      }
+      tbody.innerHTML = ''; 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+
+      if (movements && Array.isArray(movements) && movements.length > 0) {
+        if(movementsTableEl) movementsTableEl.style.display = 'table';
+        if(noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+
+        movements.forEach(function(mov) {
+          // getStockMovementsAPI retorna: [Data_Mov_ISO, Nome_Variante_Mov, Tipo, Qtd, Desc, ID_Mov(opcional), ID_Variante_FK(opcional)]
+          // Verifique a ordem exata retornada pela sua API
+          const row = tbody.insertRow();
+          
+          let formattedDate = 'Data Inválida';
+          if (mov[1] && !isNaN(new Date(mov[1]).getTime())) { // mov[1] é Data_Movimentacao na minha sugestão para getStockMovements
+            const dateObj = new Date(mov[1]);
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            formattedDate = `${day}/${month}/${year} ${hours}:${minutes}`;
+          } else if (mov[0] && !isNaN(new Date(mov[0]).getTime())) { // Fallback para o seu código original que usava mov[0] para data
+             const dateObj = new Date(mov[0]);
+             // ... (formatação como acima)
+          }
+
+          row.insertCell().textContent = formattedDate; 
+          row.insertCell().textContent = mov[3] || 'N/D'; // mov[3] é Nome_Variante_Mov na minha sugestão
+          
+          const cellTipo = row.insertCell();
+          cellTipo.textContent = mov[4] || 'N/D'; // mov[4] é Tipo_Movimentacao
+          
+          const cellQuantidade = row.insertCell();
+          const quantidade = parseInt(mov[5]) || 0; // mov[5] é Quantidade
+          cellQuantidade.textContent = quantidade;
+          
+          cellQuantidade.classList.remove('qty-entrada', 'qty-saida', 'qty-ajuste');
+          if (mov[4] && mov[4].toLowerCase() === 'entrada') cellQuantidade.classList.add('qty-entrada');
+          else if (mov[4] && mov[4].toLowerCase() === 'saida') cellQuantidade.classList.add('qty-saida');
+          else if (mov[4] && mov[4].toLowerCase() === 'ajuste') cellQuantidade.classList.add('qty-ajuste');
+          
+          row.insertCell().textContent = mov[6] || ''; // mov[6] é Descricao_Movimentacao
+        });
+      } else {
+        if(movementsTableEl) movementsTableEl.style.display = 'none';
+        if(noResultsMessageEl) {
+            noResultsMessageEl.textContent = "Nenhuma movimentação encontrada com os critérios fornecidos.";
+            noResultsMessageEl.style.display = 'block';
+        }
+      }
+    }
+
+    function getCurrentMovementSearchCriteria() {
+        const criteria = {
+            startDate: document.getElementById('filterStartDateMov').value,
+            endDate: document.getElementById('filterEndDateMov').value
+            // Se você adicionar mais filtros (ex: por ID da variante), adicione aqui
+        };
+        for (const key in criteria) {
+            if (!criteria[key]) {
+                delete criteria[key];
+            }
+        }
+        return criteria;
+    }
+
+    async function fetchStockMovements(filterCriteria = {}) {
+      if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+      if (movementsTableEl) movementsTableEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+      if (noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      
+      console.log("pesquisar_movimentacoes_form: chamando getStockMovementsAPI com critérios:", filterCriteria); 
+      if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+      try {
+        const movements = await getStockMovementsAPI(filterCriteria); 
+        displayMovements(movements);
+      } catch (error) {
+        if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+        if (errorMessageEl) {
+          errorMessageEl.textContent = 'Erro ao carregar movimentações: ' + error.message;
+          errorMessageEl.className = 'message-feedback error';
+          errorMessageEl.style.display = 'block';
+        }
+        console.error("Falha ao chamar getStockMovementsAPI:", error); 
+      } finally {
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    if (filterStockMovementForm) {
+        filterStockMovementForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchStockMovements(getCurrentMovementSearchCriteria());
+        });
+    } else {
+        console.error("Formulário 'filterStockMovementFormHtml' não encontrado.");
+    }
+
+    // NOVO: Event listener para o botão Nova Movimentação
+    if (btnNovaMovimentacao) {
+        btnNovaMovimentacao.addEventListener('click', function() {
+            if (typeof loadPage === 'function') {
+                // Não há ID para editar no caso de movimentações, sempre carrega para nova.
+                loadPage('movimentacao_estoque_form.html', 'Registrar Nova Movimentação');
+            } else {
+                console.error("Função loadPage não definida.");
+            }
+        });
+    } else {
+        console.error("Botão 'btnNovaMovimentacao' não encontrado.");
+    }
+    
+    if(tbody && filterStockMovementForm && btnNovaMovimentacao) { // Garante que elementos essenciais existem
+        fetchStockMovements({}); 
+    } else {
+        console.error("Elementos essenciais da página de pesquisa de movimentações não foram encontrados.");
+    }
+})(); 
+</script>
+</body>
+</html>

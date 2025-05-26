@@ -1,0 +1,198 @@
+<div class="page-content-wrapper" id="printArea"> <div class="form-container" style="max-width: 800px;"> <div id="orderDetailsContainer">
+      <div class="print-header">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="/pages/img/logo_rosa_transparente.png" alt="Logomarca Le Duo Chic" style="width:120px; margin-bottom:10px;">
+            <h3>Le Duo Chic - Comprovante de Pedido</h3>
+               Contato: (31) 9 8485-7664 <br> chicleduo@gmail.com</p>
+        </div>
+        <hr style="margin-bottom: 20px;">
+        <h2>Detalhes do Pedido <span id="pedidoIdDisplay"></span></h2>
+      </div>
+
+      <div class="order-section">
+        <h3>Informações do Pedido</h3>
+        <p><strong>ID do Pedido:</strong> <span id="printOrderId">N/D</span></p>
+        <p><strong>Data do Pedido:</strong> <span id="printOrderDate">N/D</span></p>
+        <p><strong>Status:</strong> <span id="printOrderStatus">N/D</span></p>
+        <p><strong>Forma de Pagamento:</strong> <span id="printOrderPaymentMethod">N/D</span></p>
+        <p><strong>Código de Rastreio:</strong> <span id="printOrderTrackingCode">N/D</span></p>
+      </div>
+
+      <hr style="margin-top: 20px; margin-bottom: 20px; border-top: 1px dashed #ccc;">
+
+      <div class="order-section">
+        <h3>Informações do Cliente</h3>
+        <p><strong>Nome:</strong> <span id="printClientName">N/D</span></p>
+        <p><strong>WhatsApp:</strong> <span id="printClientWhatsapp">N/D</span></p>
+        <p><strong>Endereço:</strong> <span id="printClientAddress">N/D</span></p>
+      </div>
+
+      <div class="order-section">
+        <h3>Itens do Pedido</h3>
+        <div class="table-container">
+          <table id="printOrderItemsTable">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th style="text-align:center;">Qtd.</th>
+                <th style="text-align:right;">Preço Unit.</th>
+                <th style="text-align:right;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" style="text-align:right; font-weight: bold;"><strong>VALOR TOTAL DO PEDIDO:</strong></td>
+                <td style="text-align:right; font-weight: bold;"><strong id="printOrderTotalValue">R$ 0,00</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="order-section" id="observacoesSection" style="display:none;">
+        <h3>Observações do Pedido</h3>
+        <p id="printOrderNotes" style="white-space: pre-wrap;"></p>
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem; text-align: center; display: flex; justify-content: space-around;" class="no-print"> 
+      <button id="backToSearchButton" class="btn-secondary" style="padding: 10px 20px;">Voltar para Pesquisa</button>
+      <button id="printPageButton" class="btn-primary" style="padding: 10px 20px;">Imprimir Pedido</button>
+    </div>
+    <div id="messagePrintOrder" class="message-feedback" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  console.log("Script de imprimir_pedido_layout.html a executar.");
+  const orderIdForPrint = window.orderIdForPrint || null; 
+
+  const messageDiv = document.getElementById('messagePrintOrder');
+  const orderDetailsContainer = document.getElementById('orderDetailsContainer');
+  const printButton = document.getElementById('printPageButton');
+  const backButton = document.getElementById('backToSearchButton'); // Botão Voltar
+
+  function formatDate(isoDateString) {
+    if (!isoDateString) return 'N/D';
+    try {
+      const date = new Date(isoDateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
+    } catch (e) {
+      return isoDateString; 
+    }
+  }
+
+  function populateOrderDetails(details) {
+    if (!details || details.status === "error") {
+      if(messageDiv) {
+        messageDiv.textContent = details ? details.message : 'Erro ao carregar detalhes do pedido.';
+        messageDiv.className = 'message-feedback error';
+        messageDiv.style.display = 'block';
+      }
+      if(orderDetailsContainer) orderDetailsContainer.style.display = 'none';
+      return;
+    }
+
+    const order = details; 
+    
+    document.getElementById('pedidoIdDisplay').textContent = `#${order.idPedido}`;
+    document.getElementById('printOrderId').textContent = order.idPedido;
+    document.getElementById('printOrderDate').textContent = formatDate(order.dataPedido);
+    document.getElementById('printOrderStatus').textContent = order.statusPedido || 'N/D';
+    document.getElementById('printOrderPaymentMethod').textContent = order.formaPagamento || 'N/D';
+    document.getElementById('printOrderTrackingCode').textContent = order.codigoRastreio || 'N/D';
+
+    document.getElementById('printClientName').textContent = order.clienteNome || 'N/D';
+    document.getElementById('printClientWhatsapp').textContent = order.clienteWhatsapp || 'N/D';
+    document.getElementById('printClientAddress').textContent = order.clienteEndereco || 'N/D';
+
+    const itemsTbody = document.getElementById('printOrderItemsTable').getElementsByTagName('tbody')[0];
+    itemsTbody.innerHTML = ''; 
+    if (order.items && order.items.length > 0) {
+      order.items.forEach(item => {
+        const row = itemsTbody.insertRow();
+        row.insertCell().textContent = item.nomeProduto || 'N/D';
+        const qtyCell = row.insertCell();
+        qtyCell.textContent = item.quantidade || 0;
+        qtyCell.style.textAlign = 'center';
+        
+        const priceCell = row.insertCell();
+        priceCell.textContent = `R$ ${(parseFloat(item.precoUnitarioVenda) || 0).toFixed(2)}`;
+        priceCell.style.textAlign = 'right';
+
+        const subtotalCell = row.insertCell();
+        subtotalCell.textContent = `R$ ${(parseFloat(item.subtotal) || 0).toFixed(2)}`;
+        subtotalCell.style.textAlign = 'right';
+      });
+    }
+
+    document.getElementById('printOrderTotalValue').textContent = `R$ ${(parseFloat(order.valorTotal) || 0).toFixed(2)}`;
+
+    if (order.observacoesPedido && order.observacoesPedido.trim() !== "") {
+        document.getElementById('observacoesSection').style.display = 'block';
+        document.getElementById('printOrderNotes').textContent = order.observacoesPedido;
+    } else {
+        document.getElementById('observacoesSection').style.display = 'none';
+    }
+    
+    if(orderDetailsContainer) orderDetailsContainer.style.display = 'block';
+  }
+
+  if (orderIdForPrint) {
+    console.log("Imprimir Pedido: Carregando detalhes para o pedido ID:", orderIdForPrint);
+    if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+    getOrderDetailsForPrintAPI(orderIdForPrint) 
+      .then(details => {
+        populateOrderDetails(details);
+      })
+      .catch(err => {
+        console.error("Falha ao obter detalhes do pedido para impressão (API):", err);
+        if(messageDiv){
+            messageDiv.textContent = 'Erro ao carregar detalhes do pedido: ' + err.message;
+            messageDiv.className = 'message-feedback error';
+            messageDiv.style.display = 'block';
+        }
+        if(orderDetailsContainer) orderDetailsContainer.style.display = 'none';
+      })
+      .finally(() => {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      });
+  } else {
+    console.error("ID do pedido para impressão não foi fornecido.");
+    if(messageDiv){
+        messageDiv.textContent = 'Nenhum ID de pedido fornecido para impressão.';
+        messageDiv.className = 'message-feedback error';
+        messageDiv.style.display = 'block';
+    }
+    if(orderDetailsContainer) orderDetailsContainer.style.display = 'none';
+  }
+
+  if (printButton) {
+    printButton.addEventListener('click', function() {
+      window.print();
+    });
+  }
+
+  if (backButton) { // Adiciona o event listener para o botão Voltar
+    backButton.addEventListener('click', function() {
+      if (typeof loadPage === 'function') {
+        // Certifique-se que 'pesquisar_pedido_form.html' é o nome correto do arquivo
+        // e 'Pesquisar Pedidos' é o título desejado para a página de pesquisa.
+        loadPage('pesquisar_pedido_form.html', 'Pesquisar Pedidos');
+      } else {
+        console.error("Função loadPage não definida. Não é possível voltar.");
+        // Fallback se loadPage não estiver disponível (improvável no contexto do index.html)
+        // window.history.back(); 
+      }
+    });
+  }
+
+})();
+</script>
+</body>
+</html>

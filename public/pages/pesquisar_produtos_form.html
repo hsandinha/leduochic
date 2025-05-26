@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="formTitlePesquisarProdutosBase" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Consultar / Gerenciar Produtos Base</h2>
+        <button type="button" id="btnNovoProdutoBase" class="btn-action-form">
+          Novo Produto Base </button>
+      </div>
+      
+      <form id="searchBaseProductFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-4"> 
+          <div>
+            <label for="searchBaseProductIdField">Pesquisar por ID Base:</label> 
+            <input type="number" id="searchBaseProductIdField" name="searchBaseProductId">
+          </div>
+          <div>
+            <label for="searchNomeBaseField">Pesquisar por Nome Base:</label> 
+            <input type="text" id="searchNomeBaseField" name="searchNomeBase">
+          </div>
+          <div>
+            <label for="searchCodigoSKUBaseField">Pesquisar por SKU Base:</label> 
+            <input type="text" id="searchCodigoSKUBaseField" name="searchCodigoSKUBase">
+          </div>
+           <div>
+            <label for="searchCategoriaPadraoField">Pesquisar por Categoria:</label> 
+            <select id="searchCategoriaPadraoField" name="searchCategoriaPadrao">
+                <option value="">Todas</option>
+                </select>
+          </div>
+          <div class="md-col-span-4" style="display: flex; justify-content: flex-end; align-items: flex-end;"> 
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: auto; padding-left:1.5rem; padding-right:1.5rem;">Pesquisar Produtos Base</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="loadingMessagePesqProdBase" class="message-feedback" style="display:none;">Carregando produtos base...</div>
+      <div id="errorMessagePesqProdBase" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessagePesqProdBase" class="message-feedback" style="display:none;">Nenhum produto base encontrado.</div>
+
+      <div class="table-container">
+        <table id="baseProductsTable">
+          <thead>
+            <tr>
+              <th>ID Base</th>
+              <th>Nome Base</th>
+              <th>SKU Base</th>
+              <th>Categoria</th>
+              <th>Marca</th>
+              <th>Caracteristicas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyBaseProductsTable">
+             <tr>
+              <td colspan="6" style="text-align:center;">Aguardando pesquisa ou carregamento inicial...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() { 
+    console.log("Script de pesquisar_produtos_form.html a executar.");
+    const searchForm = document.getElementById('searchBaseProductFormHtml');
+    const loadingMessageEl = document.getElementById('loadingMessagePesqProdBase');
+    const errorMessageEl = document.getElementById('errorMessagePesqProdBase');
+    const noResultsMessageEl = document.getElementById('noResultsMessagePesqProdBase');
+    const baseProductsTableEl = document.getElementById('baseProductsTable');
+    const tbody = document.getElementById('tbodyBaseProductsTable');
+    const btnNovoProdutoBase = document.getElementById('btnNovoProdutoBase');
+    const searchCategoriaPadraoFieldEl = document.getElementById('searchCategoriaPadraoField');
+
+    let categoriasMap = new Map(); 
+
+    async function popularDropdownCategoriasBusca() {
+        if (!searchCategoriaPadraoFieldEl) return;
+        try {
+            const categorias = await getCategoriaListAPI(); 
+            searchCategoriaPadraoFieldEl.innerHTML = '<option value="">Todas</option>';
+            if (categorias && categorias.length > 0) {
+                categorias.forEach(cat => {
+                    if (cat && cat.length === 2) { // Garante que cat é um array [ID, Nome]
+                        categoriasMap.set(cat[0].toString(), cat[1]); 
+                        searchCategoriaPadraoFieldEl.add(new Option(cat[1], cat[0]));
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Erro ao carregar categorias para filtro:", error);
+            searchCategoriaPadraoFieldEl.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+    }
+
+    // ==================================================================
+    // === INÍCIO DAS MODIFICAÇÕES E ADIÇÕES PARA EXPANDIR VARIANTES ===
+    // ==================================================================
+
+    // **NOVA FUNÇÃO: Para renderizar as características (variantes) em uma sub-tabela**
+    function renderCaracteristicas(caracteristicas, containerDiv) {
+        containerDiv.innerHTML = ''; 
+        if (caracteristicas && caracteristicas.length > 0) {
+            const subTable = document.createElement('table');
+            // Adicione classes do seu CSS se tiver para sub-tabelas, ou use estilos inline.
+            // Ex: subTable.className = 'sub-table caracteristicas-sub-table'; 
+            subTable.style.width = '100%'; 
+            subTable.style.marginTop = '0.5em';
+            subTable.style.borderCollapse = 'collapse';
+            // Aplicar estilos de borda de acordo com seu CSS
+            // subTable.style.border = '1px solid var(--rosa-claro-hover)';
+
+
+            const subThead = subTable.createTHead();
+            const headerRow = subThead.insertRow();
+            // Cabeçalhos da sub-tabela de características
+            ['ID Char.', 'Nome Completo', 'Cor', 'Tamanho', 'Preço (R$)', 'Estoque'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                // th.style.backgroundColor = '#fef8f6'; // Cor de exemplo
+                headerRow.appendChild(th);
+            });
+
+            const subTbody = subTable.createTBody();
+            caracteristicas.forEach(v => { // 'v' representa uma variante/característica
+                const row = subTbody.insertRow();
+                row.insertCell().textContent = v.iDVariante;
+                row.insertCell().textContent = v.nomeCompletoVariante;
+                row.insertCell().textContent = v.cor || '-';
+                row.insertCell().textContent = v.tamanho || '-';
+                row.insertCell().textContent = parseFloat(v.precoUnitario || 0).toFixed(2);
+                row.insertCell().textContent = v.estoqueAtual || '0'; // Lembre-se que este é o valor da fórmula
+            });
+            containerDiv.appendChild(subTable);
+        } else {
+            containerDiv.innerHTML = '<p style="padding: 10px; text-align: center; font-style: italic; color: var(--cinza-texto-secundario);">Nenhuma característica cadastrada para este produto base.</p>';
+        }
+    }
+
+    // **NOVA FUNÇÃO: Para alternar a exibição das características**
+    async function toggleCaracteristicasDisplay(baseProductId, buttonElement, detailsRow) {
+        const contentDiv = detailsRow.querySelector('.caracteristicas-details-content');
+        // Verifica se a linha está visível pelo display style ou se está vazia (table-row é o default para tr)
+        const isVisible = detailsRow.style.display === 'table-row' || detailsRow.style.display === ''; 
+
+        if (isVisible) {
+            detailsRow.style.display = 'none';
+            buttonElement.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom;"></span> Ver Mais';
+        } else {
+            detailsRow.style.display = 'table-row'; // Torna a linha de detalhes visível
+            buttonElement.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom;"></span> Ocultar';
+            
+            // Carregar características apenas se ainda não foram carregadas
+            if (contentDiv && !contentDiv.dataset.loaded) { 
+                contentDiv.innerHTML = '<p style="text-align:center; padding:10px;">Carregando características...</p>';
+                try {
+                    if (typeof showGlobalLoading === 'function') showGlobalLoading(true, true); // true para overlay menor
+                    const caracteristicas = await getVariantsByBaseProductIdAPI(baseProductId);
+                    renderCaracteristicas(caracteristicas, contentDiv);
+                    contentDiv.dataset.loaded = 'true'; // Marcar como carregado
+                } catch (error) {
+                    console.error(`Erro ao carregar características para produto base ${baseProductId}:`, error);
+                    contentDiv.innerHTML = `<p style="text-align:center; color:var(--vermelho-erro-texto); padding:10px;">Erro ao carregar características.</p>`;
+                } finally {
+                     if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                }
+            }
+        }
+    }
+
+    function displayBaseProducts(baseProducts) {
+      if (!tbody) { console.error("tbodyBaseProductsTable não encontrado."); return; }
+      tbody.innerHTML = ''; 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+
+      if (baseProducts && Array.isArray(baseProducts) && baseProducts.length > 0) {
+        if(baseProductsTableEl) baseProductsTableEl.style.display = 'table';
+        if(noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+        
+        baseProducts.forEach(function(pb) {
+          const row = tbody.insertRow(); // Linha do Produto Base
+          const baseProductId = pb.iDBaseProduto; 
+          
+          row.insertCell().textContent = baseProductId || 'N/D';
+          row.insertCell().textContent = pb.nomeBase || 'N/D';
+          row.insertCell().textContent = pb.codigoSKUBase || 'N/D';
+          row.insertCell().textContent = categoriasMap.get(pb.categoriaPadrao ? pb.categoriaPadrao.toString() : "") || pb.categoriaPadrao || 'N/D';
+          row.insertCell().textContent = pb.marcaPadrao || 'N/D'; 
+
+
+          const cellAcoes = row.insertCell();
+          const btnVerCaracteristicas = document.createElement('button');
+          btnVerCaracteristicas.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom;"></span> Ver Mais.';
+          btnVerCaracteristicas.className = 'btn-table-action'; // Use uma classe de info ou view se tiver no seu CSS
+          btnVerCaracteristicas.type = 'button';
+          btnVerCaracteristicas.style.marginLeft = '5px'; 
+          btnVerCaracteristicas.title = "Ver/Ocultar Características";
+          cellAcoes.appendChild(btnVerCaracteristicas);
+          
+          const cellAcoes = row.insertCell();
+          // Botão Gerenciar
+          const btnGerenciar = document.createElement('button');
+          btnGerenciar.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span> Gerenciar';
+          btnGerenciar.className = 'btn-table-action edit'; 
+          btnGerenciar.type = 'button';
+          btnGerenciar.title = "Gerenciar Produto Base e suas Características";
+          btnGerenciar.onclick = function() {
+            if (typeof loadPage === 'function') {
+              window.baseProductIdToLoad = baseProductId; 
+              loadPage('produto_gerenciamento_form.html', `Gerenciar: ${pb.nomeBase}`); // Nome da sua página de gerenciamento
+            }
+          };
+          cellAcoes.appendChild(btnGerenciar);
+
+
+          
+          // Botão Excluir Base
+          const btnExcluir = document.createElement('button');
+          btnExcluir.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span> Excluir';
+          btnExcluir.className = 'btn-table-action danger';
+          btnExcluir.type = 'button';
+          btnExcluir.title = "Excluir Produto Base (Atenção: Verifique variantes associadas)";
+          btnExcluir.onclick = async function() {
+            if (confirm(`Tem certeza que deseja excluir o Produto Base "${pb.nomeBase}" (ID: ${baseProductId})? Variantes associadas podem precisar ser tratadas.`)) {
+              if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+              try {
+                const response = await deleteBaseProductAPI(baseProductId); 
+                if (errorMessageEl) { 
+                    errorMessageEl.textContent = response.message;
+                    errorMessageEl.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                    errorMessageEl.style.display = 'block';
+                    setTimeout(() => { if (errorMessageEl) errorMessageEl.style.display = 'none'; }, 5000);
+                }
+                if (response.status === "success") {
+                  fetchBaseProducts( getCurrentBaseProductSearchCriteria() ); 
+                }
+              } catch (error) { 
+                if (errorMessageEl) {
+                    errorMessageEl.textContent = 'Erro ao excluir: ' + error.message;
+                    errorMessageEl.className = 'message-feedback error';
+                    errorMessageEl.style.display = 'block';
+                    setTimeout(() => { if (errorMessageEl) errorMessageEl.style.display = 'none'; }, 5000);
+                }
+              }
+              finally { if (typeof showGlobalLoading === 'function') showGlobalLoading(false); }
+            }
+          };
+          cellAcoes.appendChild(btnExcluir);
+
+          // *** NOVA: Linha oculta para detalhes das características ***
+          const detailsRow = tbody.insertRow(); // Insere DEPOIS da linha do produto base
+          detailsRow.className = 'caracteristicas-details-row'; // Para aplicar o CSS que adicionamos no <head>
+          detailsRow.style.display = 'none'; // Começa oculta
+          const detailsCell = detailsRow.insertCell();
+          detailsCell.colSpan = row.cells.length; // Para ocupar todas as colunas
+          const detailsContentDiv = document.createElement('div');
+          detailsContentDiv.className = 'caracteristicas-details-content'; // Para aplicar o CSS
+          detailsCell.appendChild(detailsContentDiv);
+
+          // Atribui o evento ao botão aqui, passando a detailsRow correta
+          btnVerCaracteristicas.onclick = function() { 
+            toggleCaracteristicasDisplay(baseProductId, btnVerCaracteristicas, detailsRow);
+          };
+        });
+      } else {
+        if(baseProductsTableEl) baseProductsTableEl.style.display = 'none';
+        if(noResultsMessageEl) {
+            noResultsMessageEl.textContent = "Nenhum produto base encontrado com os critérios fornecidos.";
+            noResultsMessageEl.style.display = 'block';
+        }
+      }
+    }
+    
+    // ==================================================================
+    // === FIM DAS MODIFICAÇÕES E ADIÇÕES PARA EXPANDIR VARIANTES ===
+    // ==================================================================
+    
+    function getCurrentBaseProductSearchCriteria() {
+        const criteria = {
+            baseProductId: document.getElementById('searchBaseProductIdField').value,
+            nomeBase: document.getElementById('searchNomeBaseField').value,
+            codigoSKUBase: document.getElementById('searchCodigoSKUBaseField').value,
+            categoriaPadrao: searchCategoriaPadraoFieldEl.value 
+        };
+        for (const key in criteria) { 
+            if (!criteria[key]) {
+                delete criteria[key];
+            }
+        }
+        return criteria;
+    }
+
+    async function fetchBaseProducts(searchCriteria = {}) {
+      if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+      if (baseProductsTableEl) baseProductsTableEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+      if (noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      
+      if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+      try {
+        let produtosBase;
+        const hasCriteria = Object.values(searchCriteria).some(val => val && val.toString().trim() !== '');
+
+        // IMPORTANTE: Idealmente, a busca filtrada é feita no backend (searchBaseProductsAPI)
+        if (hasCriteria && typeof searchBaseProductsAPI === 'function') { 
+             console.log("Pesquisando Produtos Base com critérios via API:", searchCriteria);
+             produtosBase = await searchBaseProductsAPI(searchCriteria); 
+        } else {
+             if(hasCriteria) console.warn("searchBaseProductsAPI não definida ou sem critérios, buscando todos e aplicando filtro no cliente (se implementado).");
+             produtosBase = await getAllBaseProductsAPI(); 
+             if (hasCriteria && produtosBase && Array.isArray(produtosBase)) {
+                if(searchCriteria.baseProductId) produtosBase = produtosBase.filter(p => p.iDBaseProduto && p.iDBaseProduto.toString() === searchCriteria.baseProductId);
+                if(searchCriteria.nomeBase) produtosBase = produtosBase.filter(p => p.nomeBase && p.nomeBase.toLowerCase().includes(searchCriteria.nomeBase.toLowerCase()));
+                if(searchCriteria.codigoSKUBase) produtosBase = produtosBase.filter(p => p.codigoSKUBase && p.codigoSKUBase.toLowerCase().includes(searchCriteria.codigoSKUBase.toLowerCase()));
+                if(searchCriteria.categoriaPadrao) produtosBase = produtosBase.filter(p => p.categoriaPadrao && p.categoriaPadrao.toString() === searchCriteria.categoriaPadrao);
+             }
+        }
+        displayBaseProducts(produtosBase);
+      } catch (error) {
+        if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+        if (errorMessageEl) {
+          errorMessageEl.textContent = 'Erro ao pesquisar produtos base: ' + error.message;
+          errorMessageEl.className = 'message-feedback error';
+          errorMessageEl.style.display = 'block';
+        }
+        console.error("Falha ao chamar API de Produtos Base:", error); 
+      } finally {
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchBaseProducts(getCurrentBaseProductSearchCriteria()); 
+        });
+    } else {
+        console.error("Formulário 'searchBaseProductFormHtml' não encontrado.");
+    }
+
+    if (btnNovoProdutoBase) {
+        btnNovoProdutoBase.addEventListener('click', function() {
+            if (typeof loadPage === 'function') {
+                window.baseProductIdToLoad = null; 
+                loadPage('produto_gerenciamento_form.html', 'Novo Produto Base'); // Nome da página de gerenciamento de produtos
+            } else {
+                console.error("Função loadPage não definida.");
+            }
+        });
+    }
+
+    async function initPesquisaProdutos() {
+        await popularDropdownCategoriasBusca();
+        if(tbody && searchForm && btnNovoProdutoBase) {
+            fetchBaseProducts({}); 
+        } else {
+            console.error("Elementos essenciais da página de pesquisa de produtos base não foram encontrados.");
+        }
+    }
+    initPesquisaProdutos();
+
+})(); 
+</script>
+</body>
+</html>

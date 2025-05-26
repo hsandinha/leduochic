@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+      <h2 id="formTitleCliente">Cadastrar Novo Cliente</h2>
+      <form id="clientFormHtml"> 
+        <input type="hidden" id="clientIdToUpdateHtml" name="clientIdToUpdateHtml"> 
+
+        <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Dados Pessoais e Contato</h3>
+        <div class="form-grid md-grid-cols-3"> <div>
+            <label for="nomeCliente">Nome Completo:</label>
+            <input type="text" id="nomeCliente" name="nome" required>
+          </div>
+          <div>
+            <label for="emailCliente">E-mail:</label>
+            <input type="email" id="emailCliente" name="email" required>
+          </div>
+          <div>
+            <label for="dataNascimentoCliente">Data de Nascimento:</label>
+            <input type="date" id="dataNascimentoCliente" name="dataNascimento" required>
+          </div>
+          <div>
+            <label for="whatsappCliente">Whatsapp:</label>
+            <input type="tel" id="whatsappCliente" name="whatsapp" placeholder="(XX) XXXXX-XXXX" maxlength="15" required>
+          </div>
+          <div>
+            <label for="cpfCnpjCliente">CPF/CNPJ:</label>
+            <input type="text" id="cpfCnpjCliente" name="cpfCnpj" placeholder="CPF ou CNPJ" maxlength="18" required>
+            <span id="cpfCnpjValidationMessage" style="font-size: 0.75rem; display: block; margin-top: -0.5rem; margin-bottom: 0.5rem;"></span>
+          </div>
+          <div>
+            <label for="instagramCliente">Instagram:</label>
+            <input type="text" id="instagramCliente" name="instagram" placeholder="@seu_usuario_insta">
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Endereço</h3>
+        <div class="form-grid md-grid-cols-4"> <div>
+            <label for="cepCliente">CEP:</label>
+            <input type="text" id="cepCliente" name="cep" placeholder="XXXXX-XXX" maxlength="9" required>
+          </div>
+          <div class="md-col-span-3"> <label for="enderecoCliente">Endereço:</label>
+            <input type="text" id="enderecoCliente" name="endereco" readonly>
+          </div>
+          <div> 
+            <label for="numeroCliente">Número:</label>
+            <input type="text" id="numeroCliente" name="numero">
+          </div>
+          <div>
+            <label for="complementoCliente">Complemento:</label>
+            <input type="text" id="complementoCliente" name="complemento">
+          </div>
+          <div>
+            <label for="bairroCliente">Bairro:</label>
+            <input type="text" id="bairroCliente" name="bairro" readonly>
+          </div>
+          <div>
+            <label for="pontoReferenciaCliente">Ponto de Referência:</label>
+            <input type="text" id="pontoReferenciaCliente" name="pontoReferencia">
+          </div>
+          <div>
+            <label for="cidadeCliente">Cidade:</label>
+            <input type="text" id="cidadeCliente" name="cidade" readonly>
+          </div>
+          <div>
+            <label for="estadoCliente">Estado:</label>
+            <input type="text" id="estadoCliente" name="estado" maxlength="2" readonly>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Outras Informações</h3>
+        <div class="form-grid md-grid-cols-1"> 
+          <div class="full-width"> <label for="comoConheceuCliente">Como Conheceu a Loja?</label>
+            <select id="comoConheceuCliente" name="comoConheceu">
+              <option value="">Selecione uma opção...</option>
+              <option value="Indicacao">Indicação de amigo/familiar</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Google">Pesquisa no Google</option>
+              <option value="Evento">Evento</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <div class="full-width">
+            <label for="observacoesCliente">Observações:</label>
+            <textarea id="observacoesCliente" name="observacoes" rows="3"></textarea>
+          </div>
+          <div class="full-width" style="display: flex; align-items: center; margin-top: 0.5rem;"> <input type="checkbox" id="permiteMarketingCliente" name="permiteMarketing" style="width: auto; margin-right: 0.5rem; margin-bottom: 0;">
+            <label for="permiteMarketingCliente" style="margin-bottom: 0; font-weight: normal;">Aceito receber novidades e promoções.</label> </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" id="cancelButtonCliente" class="btn-secondary" style="margin-right: 10px; display: none;">Cancelar</button>
+          <button type="submit" id="submitButtonCliente" class="btn-action-form"> Salvar Cliente 
+          </button>
+        </div>
+      </form>
+      <div id="messageCliente" class="message-feedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() { 
+      console.log("Script de cliente_form.html executando.");
+      const formCliente = document.getElementById('clientFormHtml');
+      const submitButtonCliente = document.getElementById('submitButtonCliente');
+      const cancelButtonCliente = document.getElementById('cancelButtonCliente'); // Adicionado
+      const messageDivCliente = document.getElementById('messageCliente');
+      const formTitleCliente = document.getElementById('formTitleCliente');
+      const clientIdField = document.getElementById('clientIdToUpdateHtml');
+
+      const nomeClienteEl = document.getElementById('nomeCliente');
+      const emailClienteEl = document.getElementById('emailCliente');
+      const whatsappClienteEl = document.getElementById('whatsappCliente');
+      const cpfCnpjClienteEl = document.getElementById('cpfCnpjCliente');
+      const instagramClienteEl = document.getElementById('instagramCliente');
+      const dataNascimentoClienteEl = document.getElementById('dataNascimentoCliente');
+      const cepClienteEl = document.getElementById('cepCliente');
+      const enderecoClienteEl = document.getElementById('enderecoCliente');
+      const numeroClienteEl = document.getElementById('numeroCliente'); 
+      const bairroClienteEl = document.getElementById('bairroCliente');
+      const complementoClienteEl = document.getElementById('complementoCliente');
+      const pontoReferenciaClienteEl = document.getElementById('pontoReferenciaCliente');
+      const cidadeClienteEl = document.getElementById('cidadeCliente');
+      const estadoClienteEl = document.getElementById('estadoCliente');
+      const comoConheceuClienteEl = document.getElementById('comoConheceuCliente');
+      const permiteMarketingClienteEl = document.getElementById('permiteMarketingCliente');
+      const observacoesClienteEl = document.getElementById('observacoesCliente');
+      const cpfCnpjValidationMessageEl = document.getElementById('cpfCnpjValidationMessage');
+
+      let idClienteAtualParaEdicao = window.clientIdToEdit || null; 
+      console.log("ID do Cliente para edição (cliente_form.html):", idClienteAtualParaEdicao);
+
+      // --- Suas funções de máscara e validação (copiadas do seu script original) ---
+      function aplicarMascaraWhatsApp(event) { /* ... (seu código) ... */ 
+        let valor = event.target.value.replace(/\D/g, ''); 
+        let mascaraAplicada = '';
+        if (valor.length > 0) mascaraAplicada = '(' + valor.substring(0, 2);
+        if (valor.length > 2) mascaraAplicada += ') ';
+        if (valor.length > 7) {
+        if ((valor.length - 2) === 9) mascaraAplicada += valor.substring(2, 7) + '-' + valor.substring(7, 11);
+        else mascaraAplicada += valor.substring(2, 6) + '-' + valor.substring(6, 10);
+        } else if (valor.length > 2) {
+        mascaraAplicada += valor.substring(2);
+        }
+        event.target.value = mascaraAplicada;
+      }
+      if (whatsappClienteEl) whatsappClienteEl.addEventListener('input', aplicarMascaraWhatsApp);
+
+      function aplicarMascaraInstagram(event) { /* ... (seu código) ... */ 
+        let valor = event.target.value;
+        valor = valor.replace(/^@+/, '@');
+        if (valor.length > 0 && valor.charAt(0) !== '@') {
+            valor = '@' + valor;
+        }
+        valor = valor.replace(/[^a-zA-Z0-9._@]/g, ''); 
+        if (valor.indexOf('@', 1) !== -1) {
+            valor = '@' + valor.substring(1).replace(/@/g, '');
+        }
+        event.target.value = valor;
+      }
+      if (instagramClienteEl) {
+        instagramClienteEl.addEventListener('input', aplicarMascaraInstagram);
+        instagramClienteEl.addEventListener('blur', function(event) {
+            let valor = event.target.value.trim();
+            if (valor.length > 0 && valor.charAt(0) !== '@') {
+                event.target.value = '@' + valor;
+            } else if (valor === '@') { 
+                event.target.value = '';
+            }
+        });
+      }
+
+      function aplicarMascaraCpfCnpj(event) { /* ... (seu código) ... */ 
+        let valor = event.target.value.replace(/\D/g, '');
+        let mascaraAplicada = '';
+        if (valor.length <= 11) { 
+            mascaraAplicada = valor.replace(/(\d{3})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{3})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        } else { 
+            mascaraAplicada = valor.replace(/^(\d{2})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            mascaraAplicada = mascaraAplicada.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        event.target.value = mascaraAplicada.substring(0, 18); 
+        validarCpfCnpjComDigito(event.target.value); 
+      }
+      function validarCPF(cpf) { /* ... (seu código) ... */ 
+        cpf = cpf.replace(/[^\d]+/g,''); 
+        if(cpf == '') return false; 
+        if (cpf.length != 11 || 
+            cpf == "00000000000" || cpf == "11111111111" || 
+            cpf == "22222222222" || cpf == "33333333333" || 
+            cpf == "44444444444" || cpf == "55555555555" || 
+            cpf == "66666666666" || cpf == "77777777777" || 
+            cpf == "88888888888" || cpf == "99999999999")
+                return false;   
+        let add = 0;  
+        for (let i=0; i < 9; i ++)    
+            add += parseInt(cpf.charAt(i)) * (10 - i);  
+            let rev = 11 - (add % 11);  
+            if (rev == 10 || rev == 11)   
+                rev = 0;  
+            if (rev != parseInt(cpf.charAt(9)))   
+                return false;   
+        add = 0;  
+        for (let i = 0; i < 10; i ++)   
+            add += parseInt(cpf.charAt(i)) * (11 - i);  
+        rev = 11 - (add % 11);  
+        if (rev == 10 || rev == 11) 
+            rev = 0;  
+        if (rev != parseInt(cpf.charAt(10)))
+            return false;   
+        return true;   
+      }
+      function validarCNPJ(cnpj) { /* ... (seu código) ... */ 
+        cnpj = cnpj.replace(/[^\d]+/g,'');
+        if(cnpj == '') return false;
+        if (cnpj.length != 14) return false;
+        if (cnpj == "00000000000000" || cnpj == "11111111111111" || 
+            cnpj == "22222222222222" || cnpj == "33333333333333" || 
+            cnpj == "44444444444444" || cnpj == "55555555555555" || 
+            cnpj == "66666666666666" || cnpj == "77777777777777" || 
+            cnpj == "88888888888888" || cnpj == "99999999999999")
+            return false;
+            
+        let tamanho = cnpj.length - 2
+        let numeros = cnpj.substring(0,tamanho);
+        let digitos = cnpj.substring(tamanho);
+        let soma = 0;
+        let pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+        }
+        let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(0)) return false;
+            
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0,tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+        }
+        resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(1)) return false;
+                
+        return true;
+      }
+      function validarCpfCnpjComDigito(valor) { /* ... (seu código) ... */ 
+        const apenasNumeros = valor.replace(/\D/g, '');
+        let valido = false;
+        let tipo = '';
+
+        if (apenasNumeros.length === 11) {
+            tipo = 'CPF';
+            valido = validarCPF(apenasNumeros);
+        } else if (apenasNumeros.length === 14) {
+            tipo = 'CNPJ';
+            valido = validarCNPJ(apenasNumeros);
+        }
+
+        if (cpfCnpjValidationMessageEl) {
+            if (valor.trim() === '') {
+                cpfCnpjValidationMessageEl.textContent = '';
+                cpfCnpjValidationMessageEl.style.color = '';
+            } else if (valido) {
+                cpfCnpjValidationMessageEl.textContent = tipo + ' válido.';
+                cpfCnpjValidationMessageEl.style.color = 'var(--verde-sucesso-texto)';
+            } else if (apenasNumeros.length > 0 && (apenasNumeros.length === 11 || apenasNumeros.length === 14) ) {
+                cpfCnpjValidationMessageEl.textContent = (tipo || 'Documento') + ' inválido.';
+                cpfCnpjValidationMessageEl.style.color = 'var(--vermelho-erro-texto)';
+            } else if (apenasNumeros.length > 0) {
+                cpfCnpjValidationMessageEl.textContent = 'Formato incompleto ou inválido.';
+                cpfCnpjValidationMessageEl.style.color = 'var(--vermelho-erro-texto)';
+            } else {
+                cpfCnpjValidationMessageEl.textContent = '';
+            }
+        }
+        return valido;
+      }
+      if (cpfCnpjClienteEl) {
+        cpfCnpjClienteEl.addEventListener('input', aplicarMascaraCpfCnpj);
+        cpfCnpjClienteEl.addEventListener('blur', (e) => validarCpfCnpjComDigito(e.target.value));
+      }
+
+      async function buscarEnderecoPorCEP() { /* ... (seu código, ajustando IDs dos campos de endereço) ... */ 
+        const cepValor = cepClienteEl.value.replace(/\D/g, '');
+        if (cepValor.length !== 8) {
+             if (cepValor.length > 0) { 
+                messageDivCliente.textContent = 'CEP inválido. Deve conter 8 números.';
+                messageDivCliente.className = 'message-feedback error';
+                messageDivCliente.style.display = 'block';
+                setTimeout(() => { if(messageDivCliente) messageDivCliente.style.display = 'none';}, 4000);
+            }
+            return;
+        }
+
+        console.log("Buscando endereço para o CEP:", cepValor);
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        if(messageDivCliente){
+            messageDivCliente.textContent = 'Buscando endereço...';
+            messageDivCliente.className = 'message-feedback'; 
+            messageDivCliente.style.display = 'block';
+        }
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepValor}/json/`);
+            if (!response.ok) throw new Error(`Erro na API ViaCEP: ${response.status}`);
+            const data = await response.json();
+            if (data.erro) {
+                if(messageDivCliente) {
+                    messageDivCliente.textContent = 'CEP não encontrado.';
+                    messageDivCliente.className = 'message-feedback error';
+                }
+                [enderecoClienteEl, bairroClienteEl, cidadeClienteEl, estadoClienteEl].forEach(el => el.value = '');
+            } else {
+                enderecoClienteEl.value = data.logradouro || '';
+                bairroClienteEl.value = data.bairro || '';
+                cidadeClienteEl.value = data.localidade || '';
+                estadoClienteEl.value = data.uf || '';
+                if(messageDivCliente) messageDivCliente.style.display = 'none'; 
+                if (numeroClienteEl) numeroClienteEl.focus(); 
+            }
+        } catch (error) {
+            console.error("Erro ao buscar CEP:", error);
+            if(messageDivCliente){
+                messageDivCliente.textContent = 'Erro ao buscar endereço. Verifique o CEP e sua conexão.';
+                messageDivCliente.className = 'message-feedback error';
+            }
+        } finally {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            if(messageDivCliente && messageDivCliente.textContent === 'Buscando endereço...'){
+                setTimeout(() => { if(messageDivCliente) messageDivCliente.style.display = 'none';}, 100);
+            } else { 
+                setTimeout(() => { if(messageDivCliente) messageDivCliente.style.display = 'none';}, 4000);
+            }
+        }
+      }
+      if (cepClienteEl) {
+        cepClienteEl.addEventListener('blur', buscarEnderecoPorCEP);
+        cepClienteEl.addEventListener('input', function(event) {
+            let valor = event.target.value.replace(/\D/g, '');
+            if (valor.length > 5) valor = valor.substring(0,5) + '-' + valor.substring(5,8);
+            event.target.value = valor;
+        });
+      }
+      
+      // --- Lógica de Edição e Submissão (seu código original, com pequenas adaptações) ---
+      function preencherFormularioCliente(clientDetails) { /* ... (seu código) ... */ 
+        if (!clientDetails) {
+        messageDivCliente.textContent = 'Erro: Não foi possível carregar dados do cliente.';
+        messageDivCliente.className = 'message-feedback error';
+        messageDivCliente.style.display = 'block';
+        return;
+        }
+        console.log("Preenchendo formulário de cliente com:", clientDetails);
+        nomeClienteEl.value = clientDetails.Nome || '';
+        emailClienteEl.value = clientDetails.Email || '';
+        whatsappClienteEl.value = clientDetails.Whatsapp || '';
+        if(whatsappClienteEl.value) whatsappClienteEl.dispatchEvent(new Event('input')); 
+        
+        cpfCnpjClienteEl.value = clientDetails.CPF_CNPJ || ''; 
+        if(cpfCnpjClienteEl.value) cpfCnpjClienteEl.dispatchEvent(new Event('input')); 
+
+        instagramClienteEl.value = clientDetails.Instagram || '';
+        if(instagramClienteEl.value) instagramClienteEl.dispatchEvent(new Event('input')); 
+
+        dataNascimentoClienteEl.value = clientDetails.DatadeNascimento || ''; // A chave retornada pela API é DatadeNascimento
+        
+        cepClienteEl.value = clientDetails.CEP || '';
+        if(cepClienteEl.value) cepClienteEl.dispatchEvent(new Event('input')); 
+
+        enderecoClienteEl.value = clientDetails.Endereo || clientDetails.Endereco ||''; // Tenta as duas variações de chave 
+        numeroClienteEl.value = clientDetails.Numero || ''; 
+        bairroClienteEl.value = clientDetails.Bairro || ''; 
+        complementoClienteEl.value = clientDetails.Complemento || '';
+        pontoReferenciaClienteEl.value = clientDetails.Ponto_Referencia || '';
+
+        cidadeClienteEl.value = clientDetails.Cidade || '';
+        estadoClienteEl.value = clientDetails.Estado || '';
+        comoConheceuClienteEl.value = clientDetails.Como_Conheceu || clientDetails.ComoConheceu || ''; 
+        permiteMarketingClienteEl.checked = clientDetails.Permite_Marketing === "Sim" || clientDetails.Permite_Marketing === true || clientDetails.permiteMarketing === true; 
+        observacoesClienteEl.value = clientDetails.Observaes || clientDetails.Observacoes || ''; // Tenta as duas variações
+        
+        clientIdField.value = idClienteAtualParaEdicao;
+        formTitleCliente.textContent = 'Editar Cliente (ID: ' + idClienteAtualParaEdicao + ')';
+        submitButtonCliente.textContent = 'Atualizar Cliente';
+        if(cancelButtonCliente) cancelButtonCliente.style.display = 'inline-block'; // Mostra o botão cancelar
+      }
+
+      if (idClienteAtualParaEdicao) {
+        formTitleCliente.textContent = 'Carregando dados do Cliente ID: ' + idClienteAtualParaEdicao + '...';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        
+        getClientDetailsByIdAPI(idClienteAtualParaEdicao)
+          .then(details => {
+            if (details) {
+              preencherFormularioCliente(details);
+            } else {
+              if(messageDivCliente) {
+                messageDivCliente.textContent = 'Cliente não encontrado ou erro ao carregar.';
+                messageDivCliente.className = 'message-feedback error';
+                messageDivCliente.style.display = 'block';
+              }
+              formTitleCliente.textContent = 'Erro ao Carregar Cliente';
+            }
+          })
+          .catch(err => {
+            console.error("Falha ao obter detalhes do cliente (API):", err);
+            if(messageDivCliente) {
+                messageDivCliente.textContent = 'Erro ao carregar dados do cliente: ' + err.message;
+                messageDivCliente.className = 'message-feedback error';
+                messageDivCliente.style.display = 'block';
+            }
+            formTitleCliente.textContent = 'Erro ao Carregar Cliente';
+          })
+          .finally(() => {
+              if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+          });
+      } else {
+          formTitleCliente.textContent = 'Cadastrar Novo Cliente';
+          submitButtonCliente.textContent = 'Salvar Cliente';
+          if(cancelButtonCliente) cancelButtonCliente.style.display = 'none';
+          formCliente.reset(); // Garante que o form esteja limpo para novo cadastro
+      }
+      if(window.clientIdToEdit) window.clientIdToEdit = null; // Limpa após o uso
+
+      if (formCliente) {
+        formCliente.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          if(submitButtonCliente.disabled) return;
+
+          if (cpfCnpjClienteEl.value.trim() !== '' && !validarCpfCnpjComDigito(cpfCnpjClienteEl.value)) {
+            if(messageDivCliente){
+                messageDivCliente.textContent = 'Por favor, corrija o CPF/CNPJ.';
+                messageDivCliente.className = 'message-feedback error';
+                messageDivCliente.style.display = 'block';
+            }
+            if (submitButtonCliente) { /* Reabilitar botão aqui se necessário */ }
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            cpfCnpjClienteEl.focus();
+            return;
+          }
+
+          submitButtonCliente.disabled = true;
+          submitButtonCliente.textContent = idClienteAtualParaEdicao ? 'Atualizando...' : 'Salvando...';
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+          const clientData = { 
+            nome: nomeClienteEl.value,
+            email: emailClienteEl.value,
+            whatsapp: whatsappClienteEl.value, 
+            cpfCnpj: cpfCnpjClienteEl.value, 
+            instagram: instagramClienteEl.value,
+            endereco: enderecoClienteEl.value,
+            numero: numeroClienteEl.value, 
+            bairro: bairroClienteEl.value,
+            complemento: complementoClienteEl.value,
+            pontoReferencia: pontoReferenciaClienteEl.value,
+            cep: cepClienteEl.value, 
+            cidade: cidadeClienteEl.value,
+            estado: estadoClienteEl.value,
+            dataNascimento: dataNascimentoClienteEl.value,
+            comoConheceu: comoConheceuClienteEl.value,
+            permiteMarketing: permiteMarketingClienteEl.checked, 
+            observacoes: observacoesClienteEl.value
+          };
+          
+          const idParaAtualizar = clientIdField.value || null;
+
+          try {
+            const response = await saveClientAPI(clientData, idParaAtualizar); 
+            
+            if(messageDivCliente) {
+              messageDivCliente.textContent = response.message;
+              messageDivCliente.style.display = 'block';
+              messageDivCliente.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+            }
+
+            if (response.status === "success") {
+              if (!idParaAtualizar) { 
+                formCliente.reset();
+                if(cpfCnpjValidationMessageEl) cpfCnpjValidationMessageEl.textContent = '';
+              }
+            }
+          } catch (error) {
+            if(messageDivCliente) {
+              messageDivCliente.textContent = 'Erro ao salvar: ' + error.message;
+              messageDivCliente.className = 'message-feedback error';
+              messageDivCliente.style.display = 'block';
+            }
+            console.error("Erro da API ao salvar cliente:", error);
+          } finally {
+            submitButtonCliente.disabled = false; 
+            submitButtonCliente.textContent = idParaAtualizar ? 'Atualizar Cliente' : 'Salvar Cliente';
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if(messageDivCliente) messageDivCliente.style.display = 'none';}, 4000);
+          }
+        });
+      } else {
+        console.error("Formulário 'clientFormHtml' não encontrado.");
+      }
+
+      if(cancelButtonCliente) { // Lógica para o botão Cancelar
+          cancelButtonCliente.addEventListener('click', function() {
+            formTitleCliente.textContent = 'Cadastrar Novo Cliente';
+            submitButtonCliente.textContent = 'Salvar Cliente';
+            formCliente.reset();
+            clientIdField.value = '';
+            idClienteAtualParaEdicao = null;
+            cancelButtonCliente.style.display = 'none';
+            if (messageDivCliente) messageDivCliente.style.display = 'none';
+            if(cpfCnpjValidationMessageEl) cpfCnpjValidationMessageEl.textContent = '';
+            if (typeof loadPage === 'function') { // Tenta voltar para a lista de clientes
+                loadPage('pesquisar_cliente_form.html', 'Consultar Clientes');
+            }
+        });
+      }
+
+    })(); 
+  </script>
+</body>
+</html>

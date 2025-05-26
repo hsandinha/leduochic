@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+      <h2 id="formTitleFornecedor">Cadastrar Novo Fornecedor</h2>
+      <form id="fornecedorFormHtml">
+        <input type="hidden" id="fornecedorIdToUpdateHtml" name="fornecedorIdToUpdateHtml">
+
+        <div class="form-grid md-grid-cols-3"> <div>
+            <label for="nomeFantasiaFornecedor">Nome Fantasia:</label>
+            <input type="text" id="nomeFantasiaFornecedor" name="Nome_Fantasia_Fornecedor" required>
+          </div>
+          <div>
+            <label for="razaoSocialFornecedor">Razão Social:</label>
+            <input type="text" id="razaoSocialFornecedor" name="Razao_Social_Fornecedor">
+          </div>
+          <div>
+            <label for="cnpjCpfFornecedor">CNPJ/CPF:</label>
+            <input type="text" id="cnpjCpfFornecedor" name="CNPJ_CPF_Fornecedor" placeholder="CNPJ ou CPF" maxlength="18" required>
+            <span id="cnpjCpfValidationMessage" style="font-size: 0.75rem; display: block; margin-top: -0.5rem; margin-bottom: 0.5rem;"></span>
+          </div>
+          <div>
+            <label for="contatoPrincipalFornecedor">Contato Principal (Nome):</label>
+            <input type="text" id="contatoPrincipalFornecedor" name="Contato_Principal_Fornecedor">
+          </div>
+          <div>
+            <label for="telefoneFornecedor">Telefone:</label>
+            <input type="tel" id="telefoneFornecedor" name="Telefone_Fornecedor" placeholder="(XX) XXXX-XXXX" maxlength="14">
+          </div>
+          <div>
+            <label for="whatsappFornecedor">Whatsapp:</label>
+            <input type="tel" id="whatsappFornecedor" name="Whatsapp_Fornecedor" placeholder="(XX) XXXXX-XXXX" maxlength="15">
+          </div>
+          <div>
+            <label for="emailFornecedor">E-mail:</label>
+            <input type="email" id="emailFornecedor" name="Email_Fornecedor">
+          </div>
+          <div>
+            <label for="websiteFornecedor">Website:</label>
+            <input type="url" id="websiteFornecedor" name="Website_Fornecedor" placeholder="https://exemplo.com">
+          </div>
+          <div>
+            <label for="instagramFornecedor">Instagram:</label>
+            <input type="text" id="instagramFornecedor" name="Instagram_Fornecedor" placeholder="@usuario_insta">
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Endereço</h3>
+        <div class="form-grid md-grid-cols-4"> <div>
+            <label for="cepFornecedor">CEP:</label>
+            <input type="text" id="cepFornecedor" name="CEP_Fornecedor" placeholder="XXXXX-XXX" maxlength="9">
+          </div>
+          <div class="md-col-span-3">
+            <label for="enderecoFornecedor">Endereço (Rua, Av.):</label>
+            <input type="text" id="enderecoFornecedor" name="Endereco_Fornecedor" readonly>
+          </div>
+          <div>
+            <label for="numeroEnderecoFornecedor">Número:</label>
+            <input type="text" id="numeroEnderecoFornecedor" name="Numero_Endereco_Fornecedor">
+          </div>
+          <div>
+            <label for="complementoEnderecoFornecedor">Complemento:</label>
+            <input type="text" id="complementoEnderecoFornecedor" name="Complemento_Endereco_Fornecedor">
+          </div>
+          <div>
+            <label for="bairroFornecedor">Bairro:</label>
+            <input type="text" id="bairroFornecedor" name="Bairro_Fornecedor" readonly>
+          </div>
+          <div>
+            <label for="cidadeFornecedor">Cidade:</label>
+            <input type="text" id="cidadeFornecedor" name="Cidade_Fornecedor" readonly>
+          </div>
+          <div>
+            <label for="estadoFornecedor">Estado (UF):</label>
+            <input type="text" id="estadoFornecedor" name="Estado_Fornecedor" maxlength="2" readonly>
+          </div>
+        </div>
+
+        <div class="full-width" style="margin-top: 1rem;">
+          <label for="observacoesFornecedor">Observações:</label>
+          <textarea id="observacoesFornecedor" name="Observacoes_Fornecedor" rows="3"></textarea>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" id="cancelButtonFornecedor" class="btn-secondary" style="margin-right: 10px; display: none;">Cancelar</button>
+          <button type="submit" id="submitButtonFornecedor" class="btn-action-form"> 
+            Salvar Fornecedor 
+          </button>
+        </div>
+      </form>
+      <div id="messageFornecedor" class="message-feedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      console.log("Script de Fornecedor_form.html executando.");
+      const form = document.getElementById('fornecedorFormHtml');
+      const submitButton = document.getElementById('submitButtonFornecedor');
+      const cancelButton = document.getElementById('cancelButtonFornecedor');
+      const messageDiv = document.getElementById('messageFornecedor');
+      const formTitle = document.getElementById('formTitleFornecedor');
+      const fornecedorIdField = document.getElementById('fornecedorIdToUpdateHtml');
+
+      // Campos do formulário
+      const fields = {
+        nomeFantasia: document.getElementById('nomeFantasiaFornecedor'),
+        razaoSocial: document.getElementById('razaoSocialFornecedor'),
+        cnpjCpf: document.getElementById('cnpjCpfFornecedor'),
+        contatoPrincipal: document.getElementById('contatoPrincipalFornecedor'),
+        telefone: document.getElementById('telefoneFornecedor'),
+        whatsapp: document.getElementById('whatsappFornecedor'),
+        email: document.getElementById('emailFornecedor'),
+        website: document.getElementById('websiteFornecedor'),
+        instagram: document.getElementById('instagramFornecedor'),
+        cep: document.getElementById('cepFornecedor'),
+        endereco: document.getElementById('enderecoFornecedor'),
+        numero: document.getElementById('numeroEnderecoFornecedor'),
+        complemento: document.getElementById('complementoEnderecoFornecedor'),
+        bairro: document.getElementById('bairroFornecedor'),
+        cidade: document.getElementById('cidadeFornecedor'),
+        estado: document.getElementById('estadoFornecedor'),
+        observacoes: document.getElementById('observacoesFornecedor')
+      };
+      const cnpjCpfValidationMessageEl = document.getElementById('cnpjCpfValidationMessage');
+
+      let idParaEditar = window.fornecedorIdToEdit || null; // Assumindo que main.js definirá isso
+
+      // --- Funções de Máscara e Validação (adaptadas do seu cliente_form.html) ---
+      function aplicarMascaraTelefone(event, isWhatsApp = false) {
+          let valor = event.target.value.replace(/\D/g, '');
+          let mascaraAplicada = '';
+          if (valor.length > 0) mascaraAplicada = '(' + valor.substring(0, 2);
+          if (valor.length > 2) mascaraAplicada += ') ';
+          
+          if (isWhatsApp && valor.length > 7 && (valor.length - 2) === 9) { // 9 dígitos para celular + 2 DDD
+              mascaraAplicada += valor.substring(2, 7) + '-' + valor.substring(7, 11);
+          } else if (!isWhatsApp && valor.length > 6 && (valor.length -2) <= 8) { // Fixo até 8 dígitos + 2 DDD
+              mascaraAplicada += valor.substring(2, 6) + '-' + valor.substring(6, 10);
+          } else if (valor.length > 2) { // Outros casos ou incompleto
+              if (isWhatsApp && (valor.length-2) === 9) {
+                 mascaraAplicada += valor.substring(2, 7) + (valor.length > 7 ? '-' + valor.substring(7) : valor.substring(7) );
+              } else if (!isWhatsApp && (valor.length-2) <= 8) {
+                 mascaraAplicada += valor.substring(2, 6) + (valor.length > 6 ? '-' + valor.substring(6) : valor.substring(6) );
+              } else {
+                  mascaraAplicada += valor.substring(2);
+              }
+          }
+          event.target.value = mascaraAplicada.substring(0, isWhatsApp ? 15 : 14);
+      }
+
+      if (fields.telefone) fields.telefone.addEventListener('input', (e) => aplicarMascaraTelefone(e, false));
+      if (fields.whatsapp) fields.whatsapp.addEventListener('input', (e) => aplicarMascaraTelefone(e, true));
+      
+      // Reutilizando suas funções de máscara e validação de CPF/CNPJ
+      function aplicarMascaraCpfCnpj(event) { /* ... (código da sua função cliente_form.html) ... */ 
+        let valor = event.target.value.replace(/\D/g, '');
+        let mascaraAplicada = '';
+        if (valor.length <= 11) { 
+            mascaraAplicada = valor.replace(/(\d{3})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{3})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        } else { 
+            mascaraAplicada = valor.replace(/^(\d{2})(\d)/, '$1.$2');
+            mascaraAplicada = mascaraAplicada.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            mascaraAplicada = mascaraAplicada.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            mascaraAplicada = mascaraAplicada.replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        event.target.value = mascaraAplicada.substring(0, 18); 
+        validarCpfCnpjComDigito(event.target.value);
+      }
+      function validarCPF(cpf) { /* ... (código da sua função cliente_form.html) ... */ 
+        cpf = cpf.replace(/[^\d]+/g,''); 
+        if(cpf == '') return false; 
+        if (cpf.length != 11 || 
+            cpf == "00000000000" || cpf == "11111111111" || 
+            cpf == "22222222222" || cpf == "33333333333" || 
+            cpf == "44444444444" || cpf == "55555555555" || 
+            cpf == "66666666666" || cpf == "77777777777" || 
+            cpf == "88888888888" || cpf == "99999999999")
+                return false;   
+        let add = 0;  
+        for (let i=0; i < 9; i ++)    
+            add += parseInt(cpf.charAt(i)) * (10 - i);  
+            let rev = 11 - (add % 11);  
+            if (rev == 10 || rev == 11)   
+                rev = 0;  
+            if (rev != parseInt(cpf.charAt(9)))   
+                return false;   
+        add = 0;  
+        for (let i = 0; i < 10; i ++)   
+            add += parseInt(cpf.charAt(i)) * (11 - i);  
+        rev = 11 - (add % 11);  
+        if (rev == 10 || rev == 11) 
+            rev = 0;  
+        if (rev != parseInt(cpf.charAt(10)))
+            return false;   
+        return true;   
+      }
+      function validarCNPJ(cnpj) { /* ... (código da sua função cliente_form.html) ... */
+        cnpj = cnpj.replace(/[^\d]+/g,'');
+        if(cnpj == '') return false;
+        if (cnpj.length != 14) return false;
+        if (cnpj == "00000000000000" || cnpj == "11111111111111" || 
+            cnpj == "22222222222222" || cnpj == "33333333333333" || 
+            cnpj == "44444444444444" || cnpj == "55555555555555" || 
+            cnpj == "66666666666666" || cnpj == "77777777777777" || 
+            cnpj == "88888888888888" || cnpj == "99999999999999")
+            return false;
+            
+        let tamanho = cnpj.length - 2
+        let numeros = cnpj.substring(0,tamanho);
+        let digitos = cnpj.substring(tamanho);
+        let soma = 0;
+        let pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+        }
+        let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(0)) return false;
+            
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0,tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+        }
+        resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos.charAt(1)) return false;
+                
+        return true;
+       }
+      function validarCpfCnpjComDigito(valor) { /* ... (código da sua função cliente_form.html) ... */ 
+        const apenasNumeros = valor.replace(/\D/g, '');
+        let valido = false;
+        let tipo = '';
+
+        if (apenasNumeros.length === 11) {
+            tipo = 'CPF';
+            valido = validarCPF(apenasNumeros);
+        } else if (apenasNumeros.length === 14) {
+            tipo = 'CNPJ';
+            valido = validarCNPJ(apenasNumeros);
+        }
+
+        if (cnpjCpfValidationMessageEl) {
+            if (valor.trim() === '') {
+                cnpjCpfValidationMessageEl.textContent = '';
+                cnpjCpfValidationMessageEl.style.color = '';
+            } else if (valido) {
+                cnpjCpfValidationMessageEl.textContent = tipo + ' válido.';
+                cnpjCpfValidationMessageEl.style.color = 'var(--verde-sucesso-texto)';
+            } else if (apenasNumeros.length > 0 && (apenasNumeros.length === 11 || apenasNumeros.length === 14) ) {
+                cnpjCpfValidationMessageEl.textContent = (tipo || 'Documento') + ' inválido.';
+                cnpjCpfValidationMessageEl.style.color = 'var(--vermelho-erro-texto)';
+            } else if (apenasNumeros.length > 0) {
+                cnpjCpfValidationMessageEl.textContent = 'Formato incompleto ou inválido.';
+                cnpjCpfValidationMessageEl.style.color = 'var(--vermelho-erro-texto)';
+            } else {
+                cnpjCpfValidationMessageEl.textContent = '';
+            }
+        }
+        return valido;
+      }
+      if (fields.cnpjCpf) {
+        fields.cnpjCpf.addEventListener('input', aplicarMascaraCpfCnpj);
+        fields.cnpjCpf.addEventListener('blur', (e) => validarCpfCnpjComDigito(e.target.value));
+      }
+
+      function aplicarMascaraInstagram(event) { /* ... (código da sua função cliente_form.html) ... */ 
+        let valor = event.target.value;
+        valor = valor.replace(/^@+/, '@');
+        if (valor.length > 0 && valor.charAt(0) !== '@') {
+            valor = '@' + valor;
+        }
+        valor = valor.replace(/[^a-zA-Z0-9._@]/g, ''); 
+        if (valor.indexOf('@', 1) !== -1) {
+            valor = '@' + valor.substring(1).replace(/@/g, '');
+        }
+        event.target.value = valor;
+      }
+      if (fields.instagram) {
+        fields.instagram.addEventListener('input', aplicarMascaraInstagram);
+        fields.instagram.addEventListener('blur', function(event) {
+            let valor = event.target.value.trim();
+            if (valor.length > 0 && valor.charAt(0) !== '@') {
+                event.target.value = '@' + valor;
+            } else if (valor === '@') { 
+                event.target.value = '';
+            }
+        });
+      }
+      
+      async function buscarEnderecoPorCEP() { /* ... (código da sua função cliente_form.html, ajustando os IDs dos elementos) ... */
+        const cepValor = fields.cep.value.replace(/\D/g, '');
+        if (cepValor.length !== 8) {
+            if (cepValor.length > 0) { // Só mostra mensagem se algo foi digitado
+                messageDiv.textContent = 'CEP inválido. Deve conter 8 números.';
+                messageDiv.className = 'message-feedback error';
+                messageDiv.style.display = 'block';
+                setTimeout(() => { if(messageDiv) messageDiv.style.display = 'none';}, 4000);
+            }
+            return;
+        }
+
+        console.log("Buscando endereço para o CEP (Fornecedor):", cepValor);
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        if(messageDiv){
+            messageDiv.textContent = 'Buscando endereço...';
+            messageDiv.className = 'message-feedback'; // Classe neutra
+            messageDiv.style.display = 'block';
+        }
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepValor}/json/`);
+            if (!response.ok) throw new Error(`Erro na API ViaCEP: ${response.status}`);
+            const data = await response.json();
+            if (data.erro) {
+                if(messageDiv) {
+                    messageDiv.textContent = 'CEP não encontrado.';
+                    messageDiv.className = 'message-feedback error';
+                }
+                ['endereco', 'bairro', 'cidade', 'estado'].forEach(f => fields[f].value = ''); // Limpa campos
+            } else {
+                fields.endereco.value = data.logradouro || '';
+                fields.bairro.value = data.bairro || '';
+                fields.cidade.value = data.localidade || '';
+                fields.estado.value = data.uf || '';
+                if(messageDiv) messageDiv.style.display = 'none'; 
+                if (fields.numero) fields.numero.focus(); 
+            }
+        } catch (error) {
+            console.error("Erro ao buscar CEP (Fornecedor):", error);
+            if(messageDiv){
+                messageDiv.textContent = 'Erro ao buscar endereço. Verifique o CEP e sua conexão.';
+                messageDiv.className = 'message-feedback error';
+            }
+        } finally {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            if(messageDiv && messageDiv.textContent === 'Buscando endereço...'){ // Se não houve erro ou CEP não encontrado
+                setTimeout(() => { if(messageDiv) messageDiv.style.display = 'none';}, 100); // Esconde rápido
+            } else { // Se houve erro ou CEP não encontrado, mantém por mais tempo
+                setTimeout(() => { if(messageDiv) messageDiv.style.display = 'none';}, 4000);
+            }
+        }
+      }
+      if (fields.cep) {
+        fields.cep.addEventListener('blur', buscarEnderecoPorCEP);
+        fields.cep.addEventListener('input', function(event) {
+            let valor = event.target.value.replace(/\D/g, '');
+            if (valor.length > 5) valor = valor.substring(0,5) + '-' + valor.substring(5,8);
+            event.target.value = valor;
+        });
+      }
+
+      // --- Carregar Dados para Edição ---
+      async function carregarDadosParaEdicao(id) {
+        if (!id) return;
+        formTitle.textContent = 'Carregando dados do Fornecedor...';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+          // No seu api.js: getFornecedorDetailsByIdAPI(id)
+          const details = await getFornecedorDetailsByIdAPI(id);
+          if (details && details.iDFonecedor) { // Ajuste a chave do ID para iDFonecedor (camelCase)
+            fornecedorIdField.value = details.iDFonecedor;
+            fields.nomeFantasia.value = details.nomeFantasiaFornecedor || '';
+            fields.razaoSocial.value = details.razaoSocialFornecedor || '';
+            fields.cnpjCpf.value = details.cNPJCPFFornecedor || '';
+                if(fields.cnpjCpf.value) fields.cnpjCpf.dispatchEvent(new Event('input')); // Aciona máscara
+            fields.contatoPrincipal.value = details.contatoPrincipalFornecedor || '';
+            fields.telefone.value = details.telefoneFornecedor || '';
+                if(fields.telefone.value) fields.telefone.dispatchEvent(new Event('input'));
+            fields.whatsapp.value = details.whatsappFornecedor || '';
+                if(fields.whatsapp.value) fields.whatsapp.dispatchEvent(new Event('input'));
+            fields.email.value = details.emailFornecedor || '';
+            fields.website.value = details.websiteFornecedor || '';
+            fields.instagram.value = details.instagramFornecedor || '';
+                if(fields.instagram.value) fields.instagram.dispatchEvent(new Event('input'));
+            fields.cep.value = details.cEPFornecedor || '';
+                 if(fields.cep.value) fields.cep.dispatchEvent(new Event('input')); // Aciona máscara de CEP
+            fields.endereco.value = details.enderecoFornecedor || '';
+            fields.numero.value = details.numeroEnderecoFornecedor || '';
+            fields.complemento.value = details.complementoEnderecoFornecedor || '';
+            fields.bairro.value = details.bairroFornecedor || '';
+            fields.cidade.value = details.cidadeFornecedor || '';
+            fields.estado.value = details.estadoFornecedor || '';
+            fields.observacoes.value = details.observacoesFornecedor || '';
+
+            formTitle.textContent = 'Editar Fornecedor (ID: ' + details.iDFonecedor + ')';
+            submitButton.textContent = 'Atualizar Fornecedor';
+            if(cancelButton) cancelButton.style.display = 'inline-block';
+          } else {
+            throw new Error('Fornecedor não encontrado ou dados inválidos.');
+          }
+        } catch (err) {
+          console.error("Falha ao obter detalhes do fornecedor:", err);
+          if(messageDiv) {
+            messageDiv.textContent = 'Erro ao carregar dados: ' + err.message;
+            messageDiv.className = 'message-feedback error';
+            messageDiv.style.display = 'block';
+          }
+          formTitle.textContent = 'Erro ao Carregar Fornecedor';
+        } finally {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+      }
+
+      if (idParaEditar) {
+        carregarDadosParaEdicao(idParaEditar);
+      } else {
+        formTitle.textContent = 'Cadastrar Novo Fornecedor';
+        submitButton.textContent = 'Salvar Fornecedor';
+        if(cancelButton) cancelButton.style.display = 'none';
+        form.reset();
+      }
+      if (window.fornecedorIdToEdit) window.fornecedorIdToEdit = null; // Limpa após uso
+
+      // --- Submissão do Formulário ---
+      if (form) {
+        form.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          if (submitButton.disabled) return;
+
+          if (fields.cnpjCpf.value.trim() !== '' && !validarCpfCnpjComDigito(fields.cnpjCpf.value)) {
+            if(messageDiv) {
+                messageDiv.textContent = 'Por favor, corrija o CNPJ/CPF.';
+                messageDiv.className = 'message-feedback error';
+                messageDiv.style.display = 'block';
+            }
+            fields.cnpjCpf.focus();
+            return;
+          }
+
+          submitButton.disabled = true;
+          submitButton.textContent = idParaEditar ? 'Atualizando...' : 'Salvando...';
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+          const fornecedorData = { // As chaves devem corresponder ao esperado pelo saveFornecedor no backend
+            Nome_Fantasia_Fornecedor: fields.nomeFantasia.value,
+            Razao_Social_Fornecedor: fields.razaoSocial.value,
+            CNPJ_CPF_Fornecedor: fields.cnpjCpf.value,
+            Contato_Principal_Fornecedor: fields.contatoPrincipal.value,
+            Telefone_Fornecedor: fields.telefone.value,
+            Whatsapp_Fornecedor: fields.whatsapp.value,
+            Email_Fornecedor: fields.email.value,
+            Website_Fornecedor: fields.website.value,
+            Instagram_Fornecedor: fields.instagram.value,
+            CEP_Fornecedor: fields.cep.value,
+            Endereco_Fornecedor: fields.endereco.value,
+            Numero_Endereco_Fornecedor: fields.numero.value,
+            Complemento_Endereco_Fornecedor: fields.complemento.value,
+            Bairro_Fornecedor: fields.bairro.value,
+            Cidade_Fornecedor: fields.cidade.value,
+            Estado_Fornecedor: fields.estado.value,
+            Observacoes_Fornecedor: fields.observacoes.value
+          };
+          
+          const idAtualizar = fornecedorIdField.value || null;
+
+          try {
+            // No seu api.js: saveFornecedorAPI(data, id)
+            const response = await saveFornecedorAPI(fornecedorData, idAtualizar);
+            if (messageDiv) {
+              messageDiv.textContent = response.message;
+              messageDiv.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+              messageDiv.style.display = 'block';
+            }
+            if (response.status === "success") {
+              if (!idAtualizar) { // Se estava criando
+                form.reset();
+                 if(cnpjCpfValidationMessageEl) cnpjCpfValidationMessageEl.textContent = '';
+              }
+              // Opcional: redirecionar ou atualizar lista
+            }
+          } catch (error) {
+            if (messageDiv) {
+              messageDiv.textContent = 'Erro ao salvar: ' + error.message;
+              messageDiv.className = 'message-feedback error';
+              messageDiv.style.display = 'block';
+            }
+            console.error("Erro da API ao salvar fornecedor:", error);
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = idAtualizar ? 'Atualizar Fornecedor' : 'Salvar Fornecedor';
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if (messageDiv) messageDiv.style.display = 'none'; }, 5000);
+          }
+        });
+      } else {
+        console.error("Formulário 'fornecedorFormHtml' não encontrado.");
+      }
+      
+      if(cancelButton){
+          cancelButton.addEventListener('click', function() {
+            formTitle.textContent = 'Cadastrar Novo Fornecedor';
+            submitButton.textContent = 'Salvar Fornecedor';
+            form.reset();
+            fornecedorIdField.value = '';
+            idParaEditar = null;
+            cancelButton.style.display = 'none';
+            if (messageDiv) messageDiv.style.display = 'none';
+            if(cnpjCpfValidationMessageEl) cnpjCpfValidationMessageEl.textContent = '';
+            if (typeof loadPage === 'function') {
+                loadPage('pesquisar_fornecedor_form.html', 'Consultar Fornecedores');
+            }
+        });
+      }
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container"> <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="formTitlePesquisarCliente" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Consultar Clientes</h2>
+        <button type="button" id="btnNovoCliente" class="btn-action-form">
+          Novo Cliente
+        </button>
+      </div>
+      <form id="searchClientFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;"> 
+        <div class="form-grid md:grid-cols-4">
+          <div>
+            <label for="searchClientIdField">Pesquisar por ID:</label> 
+            <input type="number" id="searchClientIdField" name="searchClientId">
+          </div>
+          <div>
+            <label for="searchClientNameField">Pesquisar por Nome:</label> 
+            <input type="text" id="searchClientNameField" name="searchClientName">
+          </div>
+          <div>
+            <label for="searchCpfCnpjField">Pesquisar por CPF/CNPJ:</label> 
+            <input type="text" id="searchCpfCnpjField" name="searchCpfCnpj" placeholder="Somente números">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Pesquisar</button> 
+            </div>
+        </div>
+      </form>
+
+      <div id="loadingMessagePesqCli" class="message-feedback" style="display:none;">Carregando clientes...</div>
+      <div id="errorMessagePesqCli" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessagePesqCli" class="message-feedback" style="display:none;">Nenhum cliente encontrado.</div>
+
+      <div class="table-container">
+        <table id="clientsTable">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF/CNPJ</th>
+              <th>Whatsapp</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyClientsTable"> </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() { 
+    console.log("Script de pesquisar_cliente_form.html a executar.");
+    const searchClientForm = document.getElementById('searchClientFormHtml');
+    const loadingMessageEl = document.getElementById('loadingMessagePesqCli');
+    const errorMessageEl = document.getElementById('errorMessagePesqCli');
+    const noResultsMessageEl = document.getElementById('noResultsMessagePesqCli');
+    const clientsTableEl = document.getElementById('clientsTable');
+    const tbody = document.getElementById('tbodyClientsTable'); // Usando o ID novo/corrigido
+    const cpfCnpjSearchField = document.getElementById('searchCpfCnpjField');
+    const btnNovoCliente = document.getElementById('btnNovoCliente'); // NOVO BOTÃO
+
+    if (cpfCnpjSearchField) {
+        cpfCnpjSearchField.addEventListener('input', function(event) {
+            let valor = event.target.value.replace(/\D/g, '');
+            let mascaraAplicada = '';
+            if (valor.length <= 11) { 
+                if (valor.length > 9) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3, 6) + '.' + valor.substring(6, 9) + '-' + valor.substring(9, 11);
+                else if (valor.length > 6) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3, 6) + '.' + valor.substring(6);
+                else if (valor.length > 3) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3);
+                else mascaraAplicada = valor;
+            } else { 
+                if (valor.length > 12) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8, 12) + '-' + valor.substring(12, 14);
+                else if (valor.length > 8) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8);
+                else if (valor.length > 5) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5);
+                else if (valor.length > 2) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2);
+                else mascaraAplicada = valor;
+            }
+            event.target.value = mascaraAplicada.substring(0, 18);
+        });
+    }
+
+    function displayClients(clients) {
+      if (!tbody) {
+        console.error("Elemento tbody da tabela de clientes não encontrado.");
+        if(errorMessageEl) {
+            errorMessageEl.textContent = "Erro interno: Tabela de clientes não encontrada.";
+            errorMessageEl.className = 'message-feedback error';
+            errorMessageEl.style.display = 'block';
+        }
+        return;
+      }
+      tbody.innerHTML = ''; 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+
+      if (clients && Array.isArray(clients) && clients.length > 0) {
+        if(clientsTableEl) clientsTableEl.style.display = 'table';
+        if(noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+        
+        clients.forEach(function(client) {
+          const row = tbody.insertRow();
+          const clientId = client.ID_Cliente; 
+          
+          row.insertCell().textContent = client.Nome || 'N/D'; 
+          row.insertCell().textContent = client.CPF_CNPJ || 'N/D'; 
+          row.insertCell().textContent = client.Whatsapp || 'N/D'; 
+          
+          const cellAcoes = row.insertCell();
+          const btnEditar = document.createElement('button');
+          btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span> Editar';
+          btnEditar.className = 'btn-table-action edit'; 
+          btnEditar.type = 'button';
+          btnEditar.onclick = function() {
+            if (typeof loadPage === 'function') {
+              window.clientIdToEdit = clientId; // Definindo ID para o formulário de cliente
+              loadPage('cliente_form.html', 'Editar Cliente', clientId); // O terceiro parâmetro clientId é opcional se window.clientIdToEdit for usado pelo form
+            } else {
+              console.error("Função loadPage não definida para editar cliente.");
+            }
+          };
+          cellAcoes.appendChild(btnEditar);
+           // Adicionar botão Excluir se necessário, similar a pesquisar_categoria_form.html
+        });
+      } else {
+        if(clientsTableEl) clientsTableEl.style.display = 'none';
+        if(noResultsMessageEl) {
+            noResultsMessageEl.textContent = "Nenhum cliente encontrado com os critérios fornecidos.";
+            noResultsMessageEl.style.display = 'block';
+        }
+      }
+    }
+    
+    function getCurrentClientSearchCriteria() {
+        const criteria = {
+            clientId: document.getElementById('searchClientIdField').value,
+            clientName: document.getElementById('searchClientNameField').value,
+            cpfCnpj: document.getElementById('searchCpfCnpjField').value.replace(/\D/g,'')
+        };
+        for (const key in criteria) {
+            if (!criteria[key]) {
+                delete criteria[key];
+            }
+        }
+        return criteria;
+    }
+
+    async function fetchClients(searchCriteria = {}) {
+      if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+      if (clientsTableEl) clientsTableEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+      if (noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      
+      if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+      try {
+        // A função searchClientsAPI já existe no seu api.js
+        const clients = await searchClientsAPI(searchCriteria); 
+        displayClients(clients);
+      } catch (error) {
+        if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+        if (errorMessageEl) {
+          errorMessageEl.textContent = 'Erro ao pesquisar clientes: ' + error.message;
+          errorMessageEl.className = 'message-feedback error';
+          errorMessageEl.style.display = 'block';
+        }
+        console.error("Falha ao chamar searchClientsAPI:", error); 
+      } finally {
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    if (searchClientForm) {
+        searchClientForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchClients(getCurrentClientSearchCriteria()); 
+        });
+    } else {
+        console.error("Formulário 'searchClientFormHtml' não encontrado.");
+    }
+
+    // NOVO: Event listener para o botão Novo Cliente
+    if (btnNovoCliente) {
+        btnNovoCliente.addEventListener('click', function() {
+            if (typeof loadPage === 'function') {
+                window.clientIdToEdit = null; // Garante que o formulário de cliente abra em modo de criação
+                loadPage('cliente_form.html', 'Cadastrar Novo Cliente');
+            } else {
+                console.error("Função loadPage não definida.");
+            }
+        });
+    } else {
+        console.error("Botão 'btnNovoCliente' não encontrado.");
+    }
+
+    // Carregar clientes ao iniciar a página (com critérios vazios para buscar todos ou conforme sua lógica)
+    if(tbody && searchClientForm && btnNovoCliente) { // Garante que elementos essenciais existem
+        fetchClients({}); 
+    } else {
+        console.error("Elementos essenciais da página de pesquisa de clientes não foram encontrados.");
+    }
+})(); 
+</script>
+</body>
+</html>

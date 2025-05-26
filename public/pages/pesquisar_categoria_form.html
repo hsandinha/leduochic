@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container"> <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="pageTitleCategoriasList" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Consultar / Gerenciar Categorias</h2>
+        <button type="button" id="btnNovaCategoria" class="btn-action-form"> 
+          Nova Categoria
+        </button>
+      </div>
+
+      <form id="searchCategoriaFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-3"> 
+          <div>
+            <label for="searchCategoriaNomeField">Pesquisar por Nome:</label> 
+            <input type="text" id="searchCategoriaNomeField" name="searchCategoriaNome">
+          </div>
+          <div>
+            <label for="searchCategoriaStatusField">Pesquisar por Status:</label> 
+            <select id="searchCategoriaStatusField" name="searchCategoriaStatus">
+              <option value="">Todos</option>
+              <option value="Ativa">Ativa</option>
+              <option value="Inativa">Inativa</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Pesquisar</button>
+          </div>
+        </div>
+      </form>
+      <div id="messageCategoriasList" class="message-feedback" style="display:none;"></div>
+
+      <div class="table-container" style="margin-top: 1rem;">
+        <table id="tabelaCategorias">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome da Categoria</th>
+              <th>Descrição</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabelaCategorias">
+            <tr>
+              <td colspan="5" style="text-align:center;">Carregando categorias...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() { 
+      console.log("Script de pesquisar_categoria_form.html executando.");
+
+      const corpoTabela = document.getElementById('corpoTabelaCategorias');
+      const messageDiv = document.getElementById('messageCategoriasList');
+      const btnNovaCategoria = document.getElementById('btnNovaCategoria');
+      const searchForm = document.getElementById('searchCategoriaFormHtml'); // Referência ao novo formulário
+
+      async function carregarCategorias(searchCriteria = {}) {
+        if (!corpoTabela) {
+            console.error("Elemento corpoTabelaCategorias não encontrado.");
+            return;
+        }
+        corpoTabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Carregando categorias...</td></tr>';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+        try {
+          let todasCategorias = await getAllCategoriasAPI(); // Busca todas as categorias
+          let categoriasFiltradas = todasCategorias;
+
+          // Aplica filtros no lado do cliente (idealmente, isso seria feito no backend com uma API de busca)
+          if (searchCriteria.nome && categoriasFiltradas) {
+            categoriasFiltradas = categoriasFiltradas.filter(cat => 
+              cat.nomeCategoria && cat.nomeCategoria.toLowerCase().includes(searchCriteria.nome.toLowerCase())
+            );
+          }
+          if (searchCriteria.status && categoriasFiltradas) {
+            categoriasFiltradas = categoriasFiltradas.filter(cat => 
+              cat.statusCategoria && cat.statusCategoria.toLowerCase() === searchCriteria.status.toLowerCase()
+            );
+          }
+
+          if (categoriasFiltradas && categoriasFiltradas.length > 0) {
+            corpoTabela.innerHTML = ''; 
+            categoriasFiltradas.forEach(cat => {
+              const row = corpoTabela.insertRow();
+              row.insertCell().textContent = cat.iDCategoria; 
+              row.insertCell().textContent = cat.nomeCategoria;
+              row.insertCell().textContent = cat.descricaoCategoria || '-';
+              row.insertCell().textContent = cat.statusCategoria || 'Ativa';
+
+              const cellAcoes = row.insertCell();
+              
+              const btnEditar = document.createElement('button');
+              btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span>Editar';
+              btnEditar.className = 'btn-table-action edit'; 
+              btnEditar.type = 'button';
+              btnEditar.onclick = function() {
+                if (typeof loadPage === 'function') {
+                  window.categoriaIdToEdit = cat.iDCategoria; 
+                  loadPage('categoria_form.html', 'Editar Categoria');
+                } else {
+                  console.error("Função loadPage não definida para editar categoria.");
+                }
+              };
+              cellAcoes.appendChild(btnEditar);
+
+              const btnExcluir = document.createElement('button');
+              btnExcluir.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span>Excluir';
+              btnExcluir.className = 'btn-table-action danger'; 
+              btnExcluir.type = 'button';
+              btnExcluir.onclick = async function() {
+                if (confirm(`Tem certeza que deseja excluir a categoria "${cat.nomeCategoria}" (ID: ${cat.iDCategoria})? Esta ação não pode ser desfeita.`)) {
+                  if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+                  try {
+                    const response = await deleteCategoriaAPI(cat.iDCategoria); 
+                    if (messageDiv) {
+                      messageDiv.textContent = response.message;
+                      messageDiv.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                      messageDiv.style.display = 'block';
+                       setTimeout(() => { if (messageDiv) messageDiv.style.display = 'none'; }, 5000);
+                    }
+                    if (response.status === "success") {
+                      carregarCategorias( getCurrentCategoriaSearchCriteria() ); 
+                    }
+                  } catch (error) {
+                     if (messageDiv) { /* ... (tratamento de erro) ... */ }
+                     console.error("Erro da API ao excluir categoria:", error);
+                  } finally {
+                    if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                  }
+                }
+              };
+              cellAcoes.appendChild(btnExcluir);
+            });
+          } else {
+            corpoTabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma categoria encontrada com os critérios fornecidos.</td></tr>';
+          }
+        } catch (error) {
+          console.error("Erro ao carregar categorias:", error);
+          corpoTabela.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--vermelho-erro-texto);">Erro ao carregar categorias: ${error.message}</td></tr>`;
+          if (messageDiv) { /* ... (tratamento de erro) ... */ }
+        } finally {
+          if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+      }
+
+      function getCurrentCategoriaSearchCriteria() {
+        const criteria = {};
+        const nomeSearchEl = document.getElementById('searchCategoriaNomeField');
+        const statusSearchEl = document.getElementById('searchCategoriaStatusField');
+        
+        if (nomeSearchEl && nomeSearchEl.value.trim()) {
+          criteria.nome = nomeSearchEl.value.trim();
+        }
+        if (statusSearchEl && statusSearchEl.value) {
+          criteria.status = statusSearchEl.value;
+        }
+        return criteria;
+      }
+
+      if (searchForm) {
+        searchForm.addEventListener('submit', function(event) {
+          event.preventDefault();
+          carregarCategorias(getCurrentCategoriaSearchCriteria());
+        });
+      } else {
+        console.warn("Formulário de pesquisa 'searchCategoriaFormHtml' não encontrado.");
+      }
+
+      if (btnNovaCategoria) {
+        btnNovaCategoria.addEventListener('click', function() {
+          if (typeof loadPage === 'function') {
+            window.categoriaIdToEdit = null; 
+            loadPage('categoria_form.html', 'Cadastrar Nova Categoria');
+          } else {
+            console.error("Função loadPage não definida para nova categoria.");
+          }
+        });
+      } else {
+        console.error("Botão 'btnNovaCategoria' não encontrado.");
+      }
+      
+      if (corpoTabela && btnNovaCategoria) { 
+         carregarCategorias(); 
+      } else {
+        console.error("Elementos essenciais da página de pesquisa de categorias não foram encontrados para carregar dados.");
+      }
+
+    })();
+  </script>
+</body>
+</html>

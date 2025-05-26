@@ -1,0 +1,192 @@
+<div class="page-content-wrapper">
+  <div class="form-container">
+    <h2 id="formTitlePesquisarUsuarios">Gerir Utilizadores</h2>
+    
+   
+    <form id="searchUserFormHtml" class="mb-6">
+      <div class="form-grid md:grid-cols-3">
+        <div>
+          <label for="searchUserUsername">Pesquisar por Nome de Utilizador:</label>
+          <input type="text" id="searchUserUsername" name="searchUserUsername">
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+          <button type="submit" class="btn-filter" style="height: 2.5rem; width: 100%;">Pesquisar Utilizadores</button>
+        </div>
+      </div>
+    </form>
+
+
+    <div id="loadingMessagePesqUser" class="message-feedback" style="display:none;">A carregar lista de utilizadores...</div>
+    <div id="errorMessagePesqUser" class="message-feedback" style="display:none;"></div>
+    <div id="noResultsMessagePesqUser" class="message-feedback" style="display:none;">Nenhum utilizador encontrado.</div>
+    <div id="userActionMessage" class="message-feedback" style="display:none;"></div>
+
+    <div class="table-container">
+      <table id="usersTableList">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome de Utilizador</th>
+            <th>Nome Completo</th>
+            <th>Nível de Acesso</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() { // IIFE
+    console.log("Script de pesquisar_usuarios_form.html a executar.");
+    const loadingMessageEl = document.getElementById('loadingMessagePesqUser');
+    const errorMessageEl = document.getElementById('errorMessagePesqUser');
+    const noResultsMessageEl = document.getElementById('noResultsMessagePesqUser');
+    const userActionMessageEl = document.getElementById('userActionMessage');
+    const usersTableEl = document.getElementById('usersTableList');
+    const tbody = usersTableEl ? usersTableEl.getElementsByTagName('tbody')[0] : null;
+    // const searchUserForm = document.getElementById('searchUserFormHtml'); // Para filtros futuros
+
+    function displayUsers(users) {
+      console.log("pesquisar_usuarios_form: displayUsers chamada. Dados:", JSON.stringify(users));
+      if (!tbody) {
+        console.error("Elemento tbody da tabela de utilizadores não encontrado.");
+        if(errorMessageEl) {
+            errorMessageEl.textContent = "Erro interno: Tabela de utilizadores não encontrada.";
+            errorMessageEl.className = 'message-feedback error';
+            errorMessageEl.style.display = 'block';
+        }
+        return;
+      }
+      tbody.innerHTML = ''; 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+
+
+      if (users && Array.isArray(users) && users.length > 0) {
+        users.forEach(function(user) {
+          // searchUsersAPI retorna um array de objetos: {ID_Usuario, Nome_Usuario, Nome_Completo, Nivel_Acesso}
+          const row = tbody.insertRow();
+          const userId = user.ID_Usuario; 
+          
+          row.insertCell().textContent = userId;
+          row.insertCell().textContent = user.Nome_Usuario || 'N/D'; 
+          row.insertCell().textContent = user.Nome_Completo || 'N/D';
+          row.insertCell().textContent = user.Nivel_Acesso || 'N/D';
+          
+          const cellAcoes = row.insertCell();
+          
+          const btnEditar = document.createElement('button');
+          btnEditar.textContent = 'Editar';
+          btnEditar.className = 'btn-table-action edit'; 
+          btnEditar.onclick = function() {
+            if (typeof loadPage === 'function') {
+                // Passa o userId para a função loadPage, que o tornará disponível para usuario_form.html
+                // O terceiro argumento de loadPage é o 'itemId'
+                loadPage('usuario_form.html', 'Editar Utilizador', userId);
+            } else {
+                console.error("Função loadPage não definida para editar utilizador.");
+                alert("Funcionalidade de edição não disponível no momento.");
+            }
+          };
+          cellAcoes.appendChild(btnEditar);
+
+          const btnExcluir = document.createElement('button');
+          btnExcluir.textContent = 'Excluir';
+          btnExcluir.className = 'btn-table-action danger'; 
+          btnExcluir.onclick = function() {
+            // Usar um modal customizado em vez de confirm() para melhor UX
+            if (confirm("Tem certeza que deseja excluir o utilizador '" + user.Nome_Usuario + "' (ID: " + userId + ")? Esta ação não pode ser desfeita.")) {
+              deleteUserLocal(userId);
+            }
+          };
+          cellAcoes.appendChild(btnExcluir);
+        });
+        if(usersTableEl) usersTableEl.style.display = 'table';
+        if(noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      } else {
+        if(usersTableEl) usersTableEl.style.display = 'none';
+        if(noResultsMessageEl) {
+            noResultsMessageEl.textContent = "Nenhum utilizador cadastrado ou encontrado.";
+            noResultsMessageEl.style.display = 'block';
+        }
+      }
+    }
+
+    async function deleteUserLocal(userId) {
+        if(userActionMessageEl) {
+            userActionMessageEl.textContent = 'A excluir utilizador...';
+            userActionMessageEl.className = 'message-feedback'; 
+            userActionMessageEl.style.display = 'block';
+        }
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+            const response = await deleteUserAPI(userId); // Função do api.js
+            if(userActionMessageEl) {
+                userActionMessageEl.textContent = response.message;
+                userActionMessageEl.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+            }
+            if (response.status === "success") {
+                fetchUsers(); // Recarrega a lista após exclusão
+            }
+        } catch (error) {
+            if(userActionMessageEl) {
+                userActionMessageEl.textContent = 'Erro ao excluir utilizador: ' + error.message;
+                userActionMessageEl.className = 'message-feedback error';
+            }
+            console.error("Erro da API ao excluir utilizador:", error);
+        } finally {
+            if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            setTimeout(() => { if(userActionMessageEl) userActionMessageEl.style.display = 'none'; }, 4000);
+        }
+    }
+
+    async function fetchUsers(searchCriteria = {}) { 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+      if (usersTableEl) usersTableEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+      if (noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      
+      console.log("pesquisar_usuarios_form: chamando searchUsersAPI com critérios:", searchCriteria);
+      if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+      try {
+        // Por enquanto, searchUsersAPI pode não aceitar critérios, ou podemos usar getAllUsersAPI
+        // const users = await searchUsersAPI(searchCriteria); 
+        const users = await getAllUsersAPI(); // Usando getAllUsersAPI para listar todos
+        displayUsers(users);
+      } catch (error) {
+        if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+        if (errorMessageEl) {
+          errorMessageEl.textContent = 'Erro ao carregar utilizadores: ' + error.message;
+          errorMessageEl.className = 'message-feedback error';
+          errorMessageEl.style.display = 'block';
+        }
+        console.error("Falha ao chamar API de utilizadores:", error); 
+      } finally {
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    // Se/quando adicionar o formulário de pesquisa:
+     const searchUserForm = document.getElementById('searchUserFormHtml');
+    if (searchUserForm) {
+        searchUserForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const searchCriteria = {
+                username: document.getElementById('searchUserUsername').value
+            };
+            fetchUsers(searchCriteria); 
+        });
+    }
+
+    console.log("pesquisar_usuarios_form.html: onload/execução do script, chamando fetchUsers...");
+    fetchUsers({}); 
+
+})(); 
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+       <div class="form-container">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="formTitlePesquisarFornecedor" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Consultar / Gerenciar Fornecedores</h2>
+        <button type="button" id="btnNovoFornecedor" class="btn-action-form">
+          Novo Fornecedor
+        </button>
+       </div>
+      
+      <form id="searchFornecedorFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-3"> 
+          <div>
+            <label for="searchFornecedorIdField">Pesquisar por ID:</label> 
+            <input type="number" id="searchFornecedorIdField" name="searchFornecedorId">
+          </div>
+          <div>
+            <label for="searchNomeFantasiaField">Pesquisar por Nome Fantasia:</label> 
+            <input type="text" id="searchNomeFantasiaField" name="searchNomeFantasia">
+          </div>
+          <div>
+            <label for="searchCnpjCpfFornecedorField">Pesquisar por CNPJ/CPF:</label> 
+            <input type="text" id="searchCnpjCpfFornecedorField" name="searchCnpjCpf" placeholder="Somente números">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Pesquisar</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="loadingMessagePesqForn" class="message-feedback" style="display:none;">Carregando fornecedores...</div>
+      <div id="errorMessagePesqForn" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessagePesqForn" class="message-feedback" style="display:none;">Nenhum fornecedor encontrado.</div>
+
+      <div class="table-container">
+        <table id="fornecedoresTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome Fantasia</th>
+              <th>Contato</th>
+              <th>Telefone</th>
+              <th>Email</th>
+              <th>CNPJ/CPF</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabelaFornecedores">
+             <tr>
+              <td colspan="7" style="text-align:center;">Aguardando pesquisa ou carregamento inicial...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() { 
+    console.log("Script de pesquisar_fornecedor_form.html a executar.");
+    const searchForm = document.getElementById('searchFornecedorFormHtml');
+    const loadingMessageEl = document.getElementById('loadingMessagePesqForn');
+    const errorMessageEl = document.getElementById('errorMessagePesqForn');
+    const noResultsMessageEl = document.getElementById('noResultsMessagePesqForn');
+    const fornecedoresTableEl = document.getElementById('fornecedoresTable');
+    const tbody = fornecedoresTableEl ? fornecedoresTableEl.getElementsByTagName('tbody')[0] : null;
+    const btnNovoFornecedor = document.getElementById('btnNovoFornecedor');
+    const cnpjCpfSearchField = document.getElementById('searchCnpjCpfFornecedorField');
+
+    if (cnpjCpfSearchField) {
+        cnpjCpfSearchField.addEventListener('input', function(event) {
+            let valor = event.target.value.replace(/\D/g, '');
+            let mascaraAplicada = '';
+            if (valor.length <= 11) { // CPF
+                if (valor.length > 9) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3, 6) + '.' + valor.substring(6, 9) + '-' + valor.substring(9, 11);
+                else if (valor.length > 6) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3, 6) + '.' + valor.substring(6);
+                else if (valor.length > 3) mascaraAplicada = valor.substring(0, 3) + '.' + valor.substring(3);
+                else mascaraAplicada = valor;
+            } else { // CNPJ
+                if (valor.length > 12) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8, 12) + '-' + valor.substring(12, 14);
+                else if (valor.length > 8) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8);
+                else if (valor.length > 5) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5);
+                else if (valor.length > 2) mascaraAplicada = valor.substring(0, 2) + '.' + valor.substring(2);
+                else mascaraAplicada = valor;
+            }
+            event.target.value = mascaraAplicada.substring(0, 18);
+        });
+    }
+
+    function displayFornecedores(fornecedores) {
+      if (!tbody) { /* ... (tratamento de erro se tbody não existir) ... */ return; }
+      tbody.innerHTML = ''; 
+      if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+
+      if (fornecedores && Array.isArray(fornecedores) && fornecedores.length > 0) {
+        if(fornecedoresTableEl) fornecedoresTableEl.style.display = 'table';
+        if(noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+        
+        fornecedores.forEach(function(forn) {
+          const row = tbody.insertRow();
+          const fornecedorId = forn.iDFonecedor; 
+          
+          row.insertCell().textContent = fornecedorId || 'N/D';
+          row.insertCell().textContent = forn.nomeFantasiaFornecedor || 'N/D';
+          row.insertCell().textContent = forn.contatoPrincipalFornecedor || 'N/D';
+          row.insertCell().textContent = forn.telefoneFornecedor || 'N/D';
+          row.insertCell().textContent = forn.emailFornecedor || 'N/D';
+          row.insertCell().textContent = forn.cNPJCPFFornecedor || 'N/D'; 
+          
+          const cellAcoes = row.insertCell();
+          const btnEditar = document.createElement('button');
+          btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span> Editar';
+          btnEditar.className = 'btn-table-action edit'; 
+          btnEditar.type = 'button';
+          btnEditar.onclick = function() {
+            if (typeof loadPage === 'function') {
+              window.fornecedorIdToEdit = fornecedorId;
+              loadPage('Fornecedor_form.html', 'Editar Fornecedor');
+            }
+          };
+          cellAcoes.appendChild(btnEditar);
+
+          const btnExcluir = document.createElement('button');
+          btnExcluir.innerHTML = '<span class="material-symbols-outlined" style="font-size: inherit; vertical-align: text-bottom; margin-right: 4px;"></span> Excluir';
+          btnExcluir.className = 'btn-table-action danger';
+          btnExcluir.type = 'button';
+          btnExcluir.onclick = async function() {
+            if (confirm(`Tem certeza que deseja excluir o fornecedor "${forn.nomeFantasiaFornecedor}" (ID: ${fornecedorId})?`)) {
+              if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+              try {
+                const response = await deleteFornecedorAPI(fornecedorId);
+                if (errorMessageEl) { 
+                    errorMessageEl.textContent = response.message;
+                    errorMessageEl.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                    errorMessageEl.style.display = 'block';
+                    setTimeout(() => { if (errorMessageEl) errorMessageEl.style.display = 'none'; }, 5000);
+                }
+                if (response.status === "success") {
+                  fetchFornecedores( getCurrentSearchCriteria() ); 
+                }
+              } catch (error) {
+                 if (errorMessageEl) { /* ... (tratamento de erro) ... */ }
+              } finally {
+                if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+              }
+            }
+          };
+          cellAcoes.appendChild(btnExcluir);
+        });
+      } else {
+        if(fornecedoresTableEl) fornecedoresTableEl.style.display = 'none';
+        if(noResultsMessageEl) {
+            noResultsMessageEl.textContent = "Nenhum fornecedor encontrado com os critérios fornecidos.";
+            noResultsMessageEl.style.display = 'block';
+        }
+      }
+    }
+    
+    function getCurrentSearchCriteria() {
+        const criteria = {
+            idFornecedor: document.getElementById('searchFornecedorIdField').value,
+            nomeFantasia: document.getElementById('searchNomeFantasiaField').value,
+            cnpjCpf: document.getElementById('searchCnpjCpfFornecedorField').value.replace(/\D/g,'')
+        };
+        for (const key in criteria) {
+            if (!criteria[key]) {
+                delete criteria[key];
+            }
+        }
+        return criteria;
+    }
+
+    async function fetchFornecedores(searchCriteria = {}) {
+      if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+      if (fornecedoresTableEl) fornecedoresTableEl.style.display = 'none';
+      if (errorMessageEl) errorMessageEl.style.display = 'none';
+      if (noResultsMessageEl) noResultsMessageEl.style.display = 'none';
+      
+      if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+      try {
+        let fornecedores;
+        // Verifica se algum critério de pesquisa foi preenchido
+        const hasCriteria = Object.values(searchCriteria).some(val => val && val.trim() !== '');
+
+        if (hasCriteria) {
+            // Assumindo que você criará searchFornecedoresAPI e a action no backend.
+            // Adicione searchFornecedoresAPI ao seu api.js e a action 'searchFornecedores' ao seu doGet em codigo.gs
+            // que aceite {idFornecedor, nomeFantasia, cnpjCpf}
+            // responseData = searchFornecedores(payload.criteria, spreadsheet);
+            // Por agora, se houver critério e searchFornecedoresAPI não existir, pode dar erro ou não filtrar.
+            // Idealmente:
+            // if(typeof searchFornecedoresAPI === 'function') {
+            //   fornecedores = await searchFornecedoresAPI(searchCriteria);
+            // } else {
+            //   console.warn("searchFornecedoresAPI não definida, buscando todos.");
+            //   fornecedores = await getAllFornecedoresAPI();
+            //   // Aqui você precisaria filtrar no cliente se searchFornecedoresAPI não existir.
+            // }
+            console.log("Pesquisando com critérios (necessita searchFornecedoresAPI):", searchCriteria);
+            fornecedores = await getAllFornecedoresAPI(); // Placeholder: busca todos e filtra no cliente
+            if(searchCriteria.idFornecedor) fornecedores = fornecedores.filter(f => f.iDFonecedor && f.iDFonecedor.toString() === searchCriteria.idFornecedor);
+            if(searchCriteria.nomeFantasia) fornecedores = fornecedores.filter(f => f.nomeFantasiaFornecedor && f.nomeFantasiaFornecedor.toLowerCase().includes(searchCriteria.nomeFantasia.toLowerCase()));
+            if(searchCriteria.cnpjCpf) fornecedores = fornecedores.filter(f => f.cNPJCPFFornecedor && f.cNPJCPFFornecedor.replace(/\D/g,'').includes(searchCriteria.cnpjCpf.replace(/\D/g,'')));
+
+        } else {
+             fornecedores = await getAllFornecedoresAPI();
+        }
+        displayFornecedores(fornecedores);
+      } catch (error) {
+        if (loadingMessageEl) loadingMessageEl.style.display = 'none';
+        if (errorMessageEl) {
+          errorMessageEl.textContent = 'Erro ao pesquisar fornecedores: ' + error.message;
+          errorMessageEl.className = 'message-feedback error';
+          errorMessageEl.style.display = 'block';
+        }
+        console.error("Falha ao chamar API de fornecedores:", error); 
+      } finally {
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+      }
+    }
+    
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchFornecedores(getCurrentSearchCriteria()); 
+        });
+    } else {
+        console.error("Formulário 'searchFornecedorFormHtml' não encontrado.");
+    }
+
+    if (btnNovoFornecedor) {
+        btnNovoFornecedor.addEventListener('click', function() {
+            if (typeof loadPage === 'function') {
+                window.fornecedorIdToEdit = null; 
+                loadPage('Fornecedor_form.html', 'Novo Fornecedor');
+            } else {
+                console.error("Função loadPage não definida.");
+            }
+        });
+    }
+
+    if(tbody && searchForm && btnNovoFornecedor) {
+        fetchFornecedores({}); 
+    } else {
+        console.error("Elementos essenciais da página de pesquisa de fornecedores não foram encontrados.");
+    }
+  })(); 
+  </script>
+</body>
+</html>
