@@ -1,9 +1,6 @@
-// js/api.js
 
-// IMPORTANTE: Substitua pela URL do seu Web App publicado do Apps Script
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQNrM5VbnAkRQDtfKnBP9BYJQjjFRUSB6xPeIA1SKvnsr-jfYOxq5FeCAOpuEpD8ustA/exec"; 
 
-// Função genérica para chamadas GET
 async function fetchData(action, params = {}) {
   let url = `${WEB_APP_URL}?action=${action}`;
   for (const key in params) {
@@ -46,9 +43,7 @@ async function fetchData(action, params = {}) {
       if (action === "getUserDetails" && typeof result === 'object' && result !== null && result.iDCliente) { // Corrigido para iDUsuario ou nomeUsuario
         return result; // Ajuste conforme o retorno de getUserDetailsById
       }
-
-
-      // Lançar erro para outros casos não previstos
+      
       throw new Error(result.message || `Resposta inesperada do backend para ${action}.`);
     }
   } catch (error) {
@@ -57,7 +52,6 @@ async function fetchData(action, params = {}) {
   }
 }
 
-// Função genérica para chamadas POST
 async function postData(action, payload) {
   console.log("API POST Action:", action, "Payload:", payload);
   try {
