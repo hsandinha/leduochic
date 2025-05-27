@@ -1,142 +1,170 @@
-<div class="page-content-wrapper">
-  <div class="form-container">
-    <h2 id="formTitleMovEstoque">Registrar Movimentação de Estoque</h2>
-    <form id="stockMovementFormHtml">
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  </head>
+<body>
+  <div class="page-content-wrapper">
+    <div class="form-container">
+      <h2 id="formTitleMovEstoque">Registrar Movimentação de Estoque</h2>
+      <form id="stockMovementFormHtml">
 
-      <div>
-        <label for="dataMovimentacao">Data da Movimentação:</label>
-        <input type="date" id="dataMovimentacao" name="dataMovimentacao" required readonly>
-      </div>
+        <div>
+          <label for="dataMovimentacao">Data da Movimentação:</label>
+          <input type="date" id="dataMovimentacao" name="dataMovimentacao" required> </div>
 
-      <div>
-        <label for="produtoIdMov">Produto:</label> <select id="produtoIdMov" name="produtoId" required>
-          <option value="">Selecione um produto...</option>
-          </select>
-      </div>
-      
-      <div>
-        <label for="tipoMovimentacao">Tipo de Movimentação:</label>
-        <select id="tipoMovimentacao" name="tipoMovimentacao" required>
-          <option value="entrada">Entrada</option>
-          <option value="saida">Saída</option>
-          </select>
-      </div>
+        <div>
+          <label for="varianteIdMov">Produto (Característica/Variante):</label> 
+          <select id="varianteIdMov" name="idVariante" required> <option value="">Selecione uma característica...</option>
+            </select>
+        </div>
+        
+        <div>
+          <label for="tipoMovimentacao">Tipo de Movimentação:</label>
+          <select id="tipoMovimentacao" name="tipoMovimentacao" required>
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+            <option value="ajuste">Ajuste (positivo ou negativo)</option> </select>
+        </div>
 
-      <div>
-        <label for="quantidadeMovimentada">Quantidade:</label>
-        <input type="number" id="quantidadeMovimentada" name="quantidadeMovimentada" step="1" min="1" required>
-        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 2px;">Para 'Saída', insira um valor positivo (será subtraído no backend).</p>
-      </div>
+        <div>
+          <label for="quantidadeMovimentada">Quantidade:</label>
+          <input type="number" id="quantidadeMovimentada" name="quantidadeMovimentada" step="1" min="1" required>
+          <p style="font-size: 0.75rem; color: var(--cinza-texto-secundario); margin-top: 2px;">Para 'Saída', insira um valor positivo. Para 'Ajuste', use positivo para adicionar e negativo para remover.</p>
+        </div>
 
-      <div>
-        <label for="descricaoMovimentacao">Descrição/Motivo:</label>
-        <textarea id="descricaoMovimentacao" name="descricaoMovimentacao" rows="3"></textarea>
-      </div>
-      
-      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
-        <button type="submit" id="submitButtonMovEstoque">
-          Registrar Movimentação
-        </button>
-      </div>
-    </form>
-    <div id="messageMovEstoque" class="message-feedback" style="display:none;"></div>
+        <div>
+          <label for="descricaoMovimentacao">Descrição/Motivo:</label>
+          <textarea id="descricaoMovimentacao" name="descricaoMovimentacao" rows="3" required></textarea> </div>
+        
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="submit" id="submitButtonMovEstoque" class="btn-action-form">
+            Registrar Movimentação
+          </button>
+        </div>
+      </form>
+      <div id="messageMovEstoque" class="message-feedback" style="display:none;"></div>
+    </div>
   </div>
-</div>
 
 <script>
-  // Script específico para movimentacao_estoque_form.html
-  (function() { // IIFE
-    console.log("Script de movimentacao_estoque_form.html executando.");
+(function() { // IIFE
+    console.log("Script de movimentacao_estoque_form.html (atualizado para variantes) executando.");
     const stockMovementForm = document.getElementById('stockMovementFormHtml');
     const submitButtonMovEstoque = document.getElementById('submitButtonMovEstoque');
     const messageDivMovEstoque = document.getElementById('messageMovEstoque');
     const dataMovimentacaoEl = document.getElementById('dataMovimentacao');
-    const selectProdutoMov = document.getElementById('produtoIdMov');
+    const selectVarianteMovEl = document.getElementById('varianteIdMov'); // ID atualizado
 
-    async function carregarProdutosMovEstoque() {
-      console.log("movimentacao_estoque_form: chamando getProductListAPI");
-      if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
-      try {
-        const produtos = await getProductListAPI(); // Usa api.js
-        if (!selectProdutoMov) { console.error("Elemento produtoIdMov não encontrado."); return; }
-        selectProdutoMov.innerHTML = '<option value="">Selecione um produto...</option>'; 
-        if (produtos && produtos.length > 0) {
-          produtos.forEach(function(produto) {
-            // produto[0] é ID_Produto, produto[1] é Nome_Produto
-            const option = new Option(`${produto[1]} (Estoque: ${produto[3] || 0})`, produto[0]); 
-            selectProdutoMov.add(option);
-          });
+    async function carregarVariantesParaMovimentacao() {
+        console.log("movimentacao_estoque_form: chamando getVariantListForOrderFormAPI");
+        if (!selectVarianteMovEl) { 
+            console.error("Elemento select 'varianteIdMov' não encontrado."); 
+            return; 
         }
-      } catch (err) {
-          console.error("Erro ao carregar produtos para movimentação (API): " + err.message);
-          if(messageDivMovEstoque){
-              messageDivMovEstoque.textContent = 'Erro ao carregar lista de produtos: ' + err.message;
-              messageDivMovEstoque.className = 'message-feedback error';
-              messageDivMovEstoque.style.display = 'block';
-          }
-      } finally {
-        if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
-      }
+        selectVarianteMovEl.innerHTML = '<option value="">Carregando características...</option>';
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+            // Esta API retorna [[ID_Variante, Nome_Completo_Variante, Preco, Estoque_Atual_Display], ...]
+            const variantes = await getVariantListForOrderFormAPI(); 
+            
+            selectVarianteMovEl.innerHTML = '<option value="">Selecione uma característica...</option>'; 
+            if (variantes && variantes.length > 0) {
+                variantes.forEach(function(variante) {
+                    // variante[0] é ID_Variante, variante[1] é Nome_Completo_Variante, variante[3] é Estoque_Atual
+                    const optionText = `${variante[1]} (Estoque: ${variante[3] || 0})`;
+                    const option = new Option(optionText, variante[0]); 
+                    selectVarianteMovEl.add(option);
+                });
+            } else {
+                selectVarianteMovEl.innerHTML = '<option value="">Nenhuma característica encontrada</option>';
+            }
+        } catch (err) {
+            console.error("Erro ao carregar características para movimentação (API):", err);
+            selectVarianteMovEl.innerHTML = '<option value="">Erro ao carregar</option>';
+            if(messageDivMovEstoque){
+                messageDivMovEstoque.textContent = 'Erro ao carregar lista de características: ' + err.message;
+                messageDivMovEstoque.className = 'message-feedback error';
+                messageDivMovEstoque.style.display = 'block';
+                setTimeout(() => { if (messageDivMovEstoque) messageDivMovEstoque.style.display = 'none'; }, 5000);
+            }
+        } finally {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
     }
 
-    // Inicialização do formulário
     if (dataMovimentacaoEl) {
-      dataMovimentacaoEl.value = new Date().toISOString().split('T')[0];
+        dataMovimentacaoEl.value = new Date().toISOString().split('T')[0];
     }
-    carregarProdutosMovEstoque();
+    carregarVariantesParaMovimentacao();
 
     if (stockMovementForm) {
-      stockMovementForm.addEventListener('submit', async function(event) {
-        event.preventDefault(); 
-        if (submitButtonMovEstoque) {
-            submitButtonMovEstoque.disabled = true;
-            submitButtonMovEstoque.textContent = 'Registrando...';
-        }
-        if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        stockMovementForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+            if (submitButtonMovEstoque && submitButtonMovEstoque.disabled) return;
 
-        const movementData = {
-          dataMovimentacao: dataMovimentacaoEl.value,
-          produtoId: selectProdutoMov.value,
-          tipoMovimentacao: document.getElementById('tipoMovimentacao').value,
-          quantidadeMovimentada: document.getElementById('quantidadeMovimentada').value,
-          descricaoMovimentacao: document.getElementById('descricaoMovimentacao').value
-        };
+            if (submitButtonMovEstoque) {
+                submitButtonMovEstoque.disabled = true;
+                submitButtonMovEstoque.textContent = 'Registrando...';
+            }
+            if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
 
-        console.log("Enviando dados de movimentação (API):", movementData);
+            const tipoMov = document.getElementById('tipoMovimentacao').value;
+            let quantidade = document.getElementById('quantidadeMovimentada').value;
 
-        try {
-          const response = await saveStockMovementAPI(movementData); // Usa api.js
-          if(messageDivMovEstoque) {
-            messageDivMovEstoque.textContent = response.message;
-            messageDivMovEstoque.style.display = 'block';
-            messageDivMovEstoque.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
-          }
-          if (response.status === "success") {
-            stockMovementForm.reset();
-            if (dataMovimentacaoEl) dataMovimentacaoEl.value = new Date().toISOString().split('T')[0];
-            // Recarregar produtos pode ser necessário se o cache de produtos no backend for invalidado
-            // ou se você quiser mostrar o estoque atualizado no dropdown (exigiria nova chamada a getProductListAPI)
-            // Por simplicidade, não recarregaremos a lista de produtos aqui, mas o estoque na planilha será atualizado.
-            // Se quiser recarregar: await carregarProdutosMovEstoque(); 
-          }
-        } catch (error) {
-          if(messageDivMovEstoque) {
-            messageDivMovEstoque.textContent = 'Erro ao registrar movimentação: ' + error.message;
-            messageDivMovEstoque.className = 'message-feedback error';
-            messageDivMovEstoque.style.display = 'block';
-          }
-          console.error("Erro da API ao salvar movimentação:", error);
-        } finally {
-          if (submitButtonMovEstoque) {
-            submitButtonMovEstoque.disabled = false; 
-            submitButtonMovEstoque.textContent = 'Registrar Movimentação';
-          }
-          if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
-          setTimeout(() => { if(messageDivMovEstoque) messageDivMovEstoque.style.display = 'none';}, 4000);
-        }
-      });
+            // Para "ajuste", o usuário pode digitar um valor negativo diretamente
+            // Para "saida", garantimos que o valor enviado para o backend (se positivo no form) seja tratado lá
+            // A função saveStockMovement no backend já trata de negativar a 'saida'
+            // e garantir que 'entrada' seja positiva.
+
+            const selectedOption = selectVarianteMovEl.options[selectVarianteMovEl.selectedIndex];
+            const nomeVarianteCompleto = selectedOption ? selectedOption.text.split(' (Estoque:')[0] : '';
+
+
+            const movementData = {
+                dataMovimentacao: dataMovimentacaoEl.value,
+                idVariante: selectVarianteMovEl.value, // Enviando o ID da Variante
+                nomeVariante: nomeVarianteCompleto,    // Enviando o nome completo da Variante
+                tipoMovimentacao: tipoMov,
+                quantidadeMovimentada: quantidade, // Envia a quantidade como digitada
+                descricaoMovimentacao: document.getElementById('descricaoMovimentacao').value
+            };
+
+            console.log("Enviando dados de movimentação (API):", movementData);
+
+            try {
+                const response = await saveStockMovementAPI(movementData); 
+                if(messageDivMovEstoque) {
+                    messageDivMovEstoque.textContent = response.message;
+                    messageDivMovEstoque.style.display = 'block';
+                    messageDivMovEstoque.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                }
+                if (response.status === "success") {
+                    stockMovementForm.reset();
+                    if (dataMovimentacaoEl) dataMovimentacaoEl.value = new Date().toISOString().split('T')[0];
+                    // Recarregar a lista de variantes para mostrar o estoque atualizado no dropdown
+                    await carregarVariantesParaMovimentacao(); 
+                }
+            } catch (error) {
+                if(messageDivMovEstoque) {
+                    messageDivMovEstoque.textContent = 'Erro ao registrar movimentação: ' + error.message;
+                    messageDivMovEstoque.className = 'message-feedback error';
+                    messageDivMovEstoque.style.display = 'block';
+                }
+                console.error("Erro da API ao salvar movimentação:", error);
+            } finally {
+                if (submitButtonMovEstoque) {
+                    submitButtonMovEstoque.disabled = false; 
+                    submitButtonMovEstoque.textContent = 'Registrar Movimentação';
+                }
+                if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                setTimeout(() => { if(messageDivMovEstoque) messageDivMovEstoque.style.display = 'none';}, 5000);
+            }
+        });
     } else {
         console.error("Formulário 'stockMovementFormHtml' não encontrado.");
     }
-  })(); // Fim da IIFE
+})();
 </script>
+</body>
+</html>
