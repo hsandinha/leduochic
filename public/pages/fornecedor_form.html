@@ -368,8 +368,8 @@
         try {
           // No seu api.js: getFornecedorDetailsByIdAPI(id)
           const details = await getFornecedorDetailsByIdAPI(id);
-          if (details && details.iDFonecedor) { // Ajuste a chave do ID para iDFonecedor (camelCase)
-            fornecedorIdField.value = details.iDFonecedor;
+          if (details && details.iDFornecedor) { // Ajuste a chave do ID para iDFornecedor (camelCase)
+            fornecedorIdField.value = details.iDFornecedor;
             fields.nomeFantasia.value = details.nomeFantasiaFornecedor || '';
             fields.razaoSocial.value = details.razaoSocialFornecedor || '';
             fields.cnpjCpf.value = details.cNPJCPFFornecedor || '';
@@ -393,7 +393,7 @@
             fields.estado.value = details.estadoFornecedor || '';
             fields.observacoes.value = details.observacoesFornecedor || '';
 
-            formTitle.textContent = 'Editar Fornecedor (ID: ' + details.iDFonecedor + ')';
+            formTitle.textContent = 'Editar Fornecedor (ID: ' + details.iDFornecedor + ')';
             submitButton.textContent = 'Atualizar Fornecedor';
             if(cancelButton) cancelButton.style.display = 'inline-block';
           } else {

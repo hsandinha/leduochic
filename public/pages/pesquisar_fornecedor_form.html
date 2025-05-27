@@ -105,9 +105,9 @@
         
         fornecedores.forEach(function(forn) {
           const row = tbody.insertRow();
-          const fornecedorId = forn.iDFonecedor; 
+          const fornecedorId = forn.iDFornecedor; 
           
-          row.insertCell().textContent = fornecedorId || 'N/D';
+          row.insertCell().textContent = forn.iDFornecedor || 'N/D';
           row.insertCell().textContent = forn.nomeFantasiaFornecedor || 'N/D';
           row.insertCell().textContent = forn.contatoPrincipalFornecedor || 'N/D';
           row.insertCell().textContent = forn.telefoneFornecedor || 'N/D';
@@ -121,6 +121,7 @@
           btnEditar.type = 'button';
           btnEditar.onclick = function() {
             if (typeof loadPage === 'function') {
+              console.log(fornecedorId)
               window.fornecedorIdToEdit = fornecedorId;
               loadPage('Fornecedor_form.html', 'Editar Fornecedor');
             }
@@ -206,7 +207,7 @@
             // }
             console.log("Pesquisando com critérios (necessita searchFornecedoresAPI):", searchCriteria);
             fornecedores = await getAllFornecedoresAPI(); // Placeholder: busca todos e filtra no cliente
-            if(searchCriteria.idFornecedor) fornecedores = fornecedores.filter(f => f.iDFonecedor && f.iDFonecedor.toString() === searchCriteria.idFornecedor);
+            if(searchCriteria.idFornecedor) fornecedores = fornecedores.filter(f => f.iDFornecedor && f.iDFornecedor.toString() === searchCriteria.idFornecedor);
             if(searchCriteria.nomeFantasia) fornecedores = fornecedores.filter(f => f.nomeFantasiaFornecedor && f.nomeFantasiaFornecedor.toLowerCase().includes(searchCriteria.nomeFantasia.toLowerCase()));
             if(searchCriteria.cnpjCpf) fornecedores = fornecedores.filter(f => f.cNPJCPFFornecedor && f.cNPJCPFFornecedor.replace(/\D/g,'').includes(searchCriteria.cnpjCpf.replace(/\D/g,'')));
 
@@ -240,7 +241,7 @@
         btnNovoFornecedor.addEventListener('click', function() {
             if (typeof loadPage === 'function') {
                 window.fornecedorIdToEdit = null; 
-                loadPage('Fornecedor_form.html', 'Novo Fornecedor');
+                loadPage('fornecedor_form.html', 'Novo Fornecedor');
             } else {
                 console.error("Função loadPage não definida.");
             }

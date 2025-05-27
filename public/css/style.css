@@ -427,6 +427,14 @@ input[readonly] {
 }
 .whatsapp-cell-content { display: flex; align-items: center; gap: 8px; }
 
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
 
 /* Botões de Ação em Tabelas */
 .btn-table-action {
