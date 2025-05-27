@@ -99,22 +99,14 @@
         }
     }
 
-    // ==================================================================
-    // === INÍCIO DAS MODIFICAÇÕES E ADIÇÕES PARA EXPANDIR VARIANTES ===
-    // ==================================================================
-
-    // **NOVA FUNÇÃO: Para renderizar as características (variantes) em uma sub-tabela**
     function renderCaracteristicas(caracteristicas, containerDiv) {
         containerDiv.innerHTML = ''; 
         if (caracteristicas && caracteristicas.length > 0) {
             const subTable = document.createElement('table');
-            // Adicione classes do seu CSS se tiver para sub-tabelas, ou use estilos inline.
-            // Ex: subTable.className = 'sub-table caracteristicas-sub-table'; 
             subTable.style.width = '100%'; 
             subTable.style.marginTop = '0.5em';
             subTable.style.borderCollapse = 'collapse';
-            // Aplicar estilos de borda de acordo com seu CSS
-            // subTable.style.border = '1px solid var(--rosa-claro-hover)';
+
 
 
             const subThead = subTable.createTHead();
@@ -278,10 +270,7 @@
       }
     }
     
-    // ==================================================================
-    // === FIM DAS MODIFICAÇÕES E ADIÇÕES PARA EXPANDIR VARIANTES ===
-    // ==================================================================
-    
+      
     function getCurrentBaseProductSearchCriteria() {
         const criteria = {
             baseProductId: document.getElementById('searchBaseProductIdField').value,

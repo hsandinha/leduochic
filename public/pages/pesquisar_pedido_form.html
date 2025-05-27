@@ -228,9 +228,7 @@
             event.preventDefault();
             loadOrders(getCurrentOrderSearchCriteria()); 
         });
-    } else { /* ... (log de erro) ... */ }
-
-    // NOVO: Event listener para o botão Novo Pedido
+    }
     if (btnNovoPedido) {
         btnNovoPedido.addEventListener('click', function() {
             if (typeof loadPage === 'function') {

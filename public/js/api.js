@@ -1,4 +1,4 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzc7THwdouP3UvuT1MsBylA-8GTIRfjj4V3kwxMfezfsLV26cvPju2QaCFUwRC0NxzqEA/exec"; 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwwArWml32gsuMng5UqEs2xA9Ga66mphxoulGY1IhJH_UMMd-JnU4xTNLOyXtrdI1thrg/exec"; 
 
 async function fetchData(action, params = {}) {
   let url = `${WEB_APP_URL}?action=${action}`;
@@ -56,7 +56,7 @@ async function postData(action, payload) {
     const response = await fetch(WEB_APP_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // Necessário para Apps Script e.postData.contents
+        'Content-Type': 'text/plain;charset=utf-8', 
       },
       body: JSON.stringify({ action: action, payload: payload }),
     });
