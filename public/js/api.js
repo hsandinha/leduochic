@@ -42,7 +42,6 @@ async function fetchData(action, params = {}) {
       if (action === "getUserDetails" && typeof result === 'object' && result !== null && result.iDCliente) { // Corrigido para iDUsuario ou nomeUsuario
         return result; // Ajuste conforme o retorno de getUserDetailsById
       }
-
       throw new Error(result.message || `Resposta inesperada do backend para ${action}.`);
     }
   } catch (error) {

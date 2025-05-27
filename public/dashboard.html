@@ -56,9 +56,6 @@
           window.location.href = 'index.html';
         } else {
           console.log("Dashboard: Sessão válida. Utilizador:", sessionCheckResponse.user ? sessionCheckResponse.user.nomeCompleto : "N/A");
-          // A página pode continuar a carregar. O main.js será executado a seguir.
-          // Pode-se popular o nome do utilizador na UI aqui, se houver um elemento para isso.
-          // Ex: document.getElementById('userNameDisplay').textContent = sessionCheckResponse.user.nomeCompleto;
         }
       } catch (error) {
         if (tempLoadingDiv) tempLoadingDiv.remove();

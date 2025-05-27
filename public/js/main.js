@@ -1,6 +1,4 @@
-// js/main.js
 
-// Elementos globais
 const mainContentDiv = document.getElementById('main-content-container');
 const sidebarContainerElement = document.getElementById('sidebar-container');
 const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -36,10 +34,9 @@ async function loadPage(pageFile, pageTitle, itemId) { // itemId é genérico
         // Limpa IDs de edições anteriores para evitar conflitos entre carregamentos de página
         window.clientIdToEdit = null;
         window.orderIdForPrint = null;
-        window.userIdToEdit = null; // Limpa o ID do utilizador também
+        window.userIdToEdit = null; 
 
         if (itemId) {
-            // Define a variável global que o script da página carregada usará
             if (pageFile === 'cliente_form.html') {
                  window.clientIdToEdit = itemId; 
                  console.log("[loadPage] clientIdToEdit definido globalmente:", window.clientIdToEdit);
@@ -50,7 +47,6 @@ async function loadPage(pageFile, pageTitle, itemId) { // itemId é genérico
                  window.orderIdForPrint = itemId; 
                  console.log("[loadPage] orderIdForPrint definido globalmente:", window.orderIdForPrint);
             }
-            // Adicione mais 'else if' para outras páginas que precisam de IDs para edição/visualização
         }
 
 
@@ -74,7 +70,6 @@ async function loadPage(pageFile, pageTitle, itemId) { // itemId é genérico
                 oldScript.parentNode.removeChild(oldScript);
             }
 
-            // Adiciona o novo script ao head para tentar forçar a execução
             document.head.appendChild(newScript); 
             
             if (newScript.src) {
@@ -204,7 +199,7 @@ if (sidebarToggle && sidebarContainerElement) {
         sidebarContainerElement.classList.toggle('open');
     });
 }
-// Fecha a sidebar se clicar fora dela em ecrãs pequenos
+
 if(mainContentDiv && sidebarContainerElement){
     mainContentDiv.addEventListener('click', function() {
         if (window.innerWidth <= 768 && sidebarContainerElement.classList.contains('open')) {
@@ -213,8 +208,6 @@ if(mainContentDiv && sidebarContainerElement){
     });
 }
 
-// Carregar a sidebar quando a página dashboard.html carregar
-// (Assumindo que este main.js é carregado pelo dashboard.html após a verificação de sessão)
 window.onload = function() {
   console.log("dashboard.html: window.onload disparado (main.js)."); 
   loadSidebar();
