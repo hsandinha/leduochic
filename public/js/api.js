@@ -84,6 +84,7 @@ function saveUserAPI(userData, userIdToUpdate = null) { return postData('saveUse
 function getUserDetailsByIdAPI(userId) { return fetchData('getUserDetails', { userId }); } // doGet -> getUserDetails
 function searchUsersAPI(searchCriteria) { return fetchData('searchUsers', searchCriteria); }
 function deleteUserAPI(userId) { return postData('deleteUser', { userId }); }
+function getAllUsersAPI() { return fetchData('searchUsers', {}); }
 
 // --- Funções de Clientes ---
 function getClientListAPI() { return fetchData('getClientList'); }

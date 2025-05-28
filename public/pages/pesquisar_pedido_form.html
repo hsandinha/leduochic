@@ -324,7 +324,7 @@
                 let formattedDate = 'Data Inválida';
                 if (order[1] && !isNaN(new Date(order[1]).getTime())) {
                     const dateObj = new Date(order[1].replace(" ", "T")); // Ajuste para data ISO
-                    formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(dateObj);
+                    formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dateObj);
                 }
                 row.insertCell().textContent = formattedDate;
                 row.insertCell().textContent = order[2] || 'N/D'; 

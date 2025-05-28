@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    /* Estilo para a seção do formulário de usuário (pode ir para o style.css) */
+    .form-section-usuario {
+      border: 1px solid var(--cinza-bordas);
+      padding: 1.5rem;
+      border-radius: 0.375rem;
+      margin-top: 1.5rem;
+      background-color: var(--cinza-fundo-conteudo);
+    }
+    .actions-cell-usuarios { /* Para a coluna de ações na tabela de usuários */
+        min-width: 180px; /* Ajuste para Editar e Excluir */
+    }
+  </style>
+</head>
+<body>
+<div class="page-content-wrapper">
+  <div class="form-container"> 
+
+    <div id="listagemUsuariosSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="formTitlePesquisarUsuarios" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Gerenciar Usuários</h2>
+        <button type="button" id="btnAbrirFormNovoUsuario" class="btn-action-form">
+          Incluir Novo Usuário
+        </button>
+      </div>
+      
+      <form id="searchUserFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-3"> <div class="md-col-span-2"> <label for="searchUserUsername">Pesquisar por Nome de Usuário:</label>
+            <input type="text" id="searchUserUsername" name="searchUserUsername">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Pesquisar</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="loadingMessagePesqUser" class="message-feedback" style="display:none;">Carregando lista de usuários...</div>
+      <div id="errorMessagePesqUser" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessagePesqUser" class="message-feedback" style="display:none;">Nenhum usuário encontrado.</div>
+      <div id="userActionMessage" class="message-feedback" style="display:none;"></div> <div class="table-container">
+        <table id="usersTableList">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome de Usuário</th>
+              <th>Nome Completo</th>
+              <th>Nível de Acesso</th>
+              <th class="actions-cell-usuarios">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUsersList"> <tr><td colspan="5" style="text-align:center;">Aguardando pesquisa ou carregamento inicial...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div> <div id="formNovoUsuarioContainer" class="form-section-usuario" style="display:none;">
+      <h3 id="formTitleUsuarioModal" style="margin-top:0; color: var(--rosa-profundo);">Novo Usuário</h3>
+      <form id="usuarioFormHtml_modal">
+        <input type="hidden" id="usuarioIdParaEditar" name="ID_Usuario">
+
+        <div class="form-grid md:grid-cols-2">
+          <div>
+            <label for="nomeUsuario_modal">Nome de Usuário (para login):</label>
+            <input type="text" id="nomeUsuario_modal" name="nomeUsuario" required>
+          </div>
+          <div>
+            <label for="nomeCompletoUsuario_modal">Nome Completo:</label>
+            <input type="text" id="nomeCompletoUsuario_modal" name="nomeCompleto" required>
+          </div>
+          <div>
+            <label for="senhaUsuario_modal">Senha:</label>
+            <input type="password" id="senhaUsuario_modal" name="senha">
+            <p style="font-size: 0.75rem; color: var(--cinza-texto-secundario); margin-top: 2px;">Deixe em branco se não quiser alterar a senha (ao editar).</p>
+          </div>
+          <div>
+            <label for="confirmarSenhaUsuario_modal">Confirmar Senha:</label>
+            <input type="password" id="confirmarSenhaUsuario_modal" name="confirmarSenha">
+          </div>
+          <div class="md-col-span-2">
+            <label for="nivelAcessoUsuario_modal">Nível de Acesso:</label>
+            <select id="nivelAcessoUsuario_modal" name="nivelAcesso" required>
+              <option value="usuario">Usuário Padrão</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" id="cancelUsuarioButton_modal" class="btn-secondary" style="margin-right: 10px;">Cancelar</button>
+          <button type="submit" id="submitUsuarioButton_modal" class="btn-action-form">
+            Salvar Usuário
+          </button>
+        </div>
+      </form>
+      <div id="messageUsuario_modal" class="message-feedback" style="display:none;"></div>
+    </div> </div> </div> <script>
+(function() { 
+    console.log("Script de pesquisar_usuarios_form.html (combinado) executando.");
+
+    // --- Elementos da Listagem e Filtro ---
+    const listagemSectionUsuarios = document.getElementById('listagemUsuariosSection');
+    const searchUserForm = document.getElementById('searchUserFormHtml');
+    const loadingMessageEl = document.getElementById('loadingMessagePesqUser');
+    const errorMessageEl = document.getElementById('errorMessagePesqUser');
+    const noResultsMessageEl = document.getElementById('noResultsMessagePesqUser');
+    const userActionMessageEl = document.getElementById('userActionMessage'); // Para feedback de delete/save na lista
+    const usersTableEl = document.getElementById('usersTableList');
+    const tbody = document.getElementById('tbodyUsersList'); 
+    const btnAbrirFormNovoUsuario = document.getElementById('btnAbrirFormNovoUsuario');
+    const searchUserUsernameEl = document.getElementById('searchUserUsername');
+
+    // --- Elementos do Formulário de Cadastro/Edição ---
+    const formSectionUsuario = document.getElementById('formNovoUsuarioContainer');
+    const formUsuarioModal = document.getElementById('usuarioFormHtml_modal');
+    const formTitleUsuarioModalEl = document.getElementById('formTitleUsuarioModal');
+    const usuarioIdFieldModal = document.getElementById('usuarioIdParaEditar');
+    const nomeUsuarioModalEl = document.getElementById('nomeUsuario_modal');
+    const nomeCompletoUsuarioModalEl = document.getElementById('nomeCompletoUsuario_modal');
+    const senhaUsuarioModalEl = document.getElementById('senhaUsuario_modal');
+    const confirmarSenhaUsuarioModalEl = document.getElementById('confirmarSenhaUsuario_modal');
+    const nivelAcessoUsuarioModalEl = document.getElementById('nivelAcessoUsuario_modal');
+    const submitUsuarioButtonModal = document.getElementById('submitUsuarioButton_modal');
+    const cancelUsuarioButtonModal = document.getElementById('cancelUsuarioButton_modal');
+    const messageUsuarioModalDiv = document.getElementById('messageUsuario_modal');
+
+    let editandoUsuarioId = null;
+
+    // --- FUNÇÕES AUXILIARES E DE MANIPULAÇÃO DO DOM ---
+    function mostrarFormularioUsuario(mostrar = true, idParaEditar = null) {
+        if (mostrar) {
+            listagemSectionUsuarios.style.display = 'none';
+            formSectionUsuario.style.display = 'block';
+            editandoUsuarioId = idParaEditar;
+            formUsuarioModal.reset(); 
+            if (messageUsuarioModalDiv) messageUsuarioModalDiv.style.display = 'none';
+
+            if (idParaEditar) {
+                formTitleUsuarioModalEl.textContent = "Editar Usuário";
+                submitUsuarioButtonModal.textContent = "Atualizar Usuário";
+                senhaUsuarioModalEl.required = false; // Senha não é obrigatória ao editar
+                confirmarSenhaUsuarioModalEl.required = false;
+                carregarDadosUsuarioParaEdicao(idParaEditar);
+            } else {
+                formTitleUsuarioModalEl.textContent = "Incluir Novo Usuário";
+                submitUsuarioButtonModal.textContent = "Salvar Usuário";
+                senhaUsuarioModalEl.required = true; // Senha obrigatória para novo usuário
+                confirmarSenhaUsuarioModalEl.required = true;
+                nomeUsuarioModalEl.disabled = false; // Garante que o nome de usuário seja editável para novos
+            }
+        } else {
+            listagemSectionUsuarios.style.display = 'block';
+            formSectionUsuario.style.display = 'none';
+            editandoUsuarioId = null;
+        }
+    }
+
+    async function carregarDadosUsuarioParaEdicao(userId) {
+        if (!userId) return;
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+            // getUserDetailsByIdAPI já deve estar no seu api.js
+            const details = await getUserDetailsByIdAPI(userId); 
+            if (details && details.ID_Usuario) { // Chaves como retornadas pelo backend
+                usuarioIdFieldModal.value = details.ID_Usuario;
+                nomeUsuarioModalEl.value = details.Nome_Usuario || '';
+                nomeUsuarioModalEl.disabled = true; // Nome de usuário não pode ser editado
+                nomeCompletoUsuarioModalEl.value = details.Nome_Completo || '';
+                nivelAcessoUsuarioModalEl.value = details.Nivel_Acesso || 'usuario';
+                // Senha e Confirmar Senha ficam em branco por padrão ao editar
+                senhaUsuarioModalEl.value = '';
+                confirmarSenhaUsuarioModalEl.value = '';
+            } else {
+                throw new Error("Usuário não encontrado ou dados inválidos.");
+            }
+        } catch (err) {
+            console.error("Falha ao obter detalhes do usuário:", err);
+            if(messageUsuarioModalDiv) {
+                messageUsuarioModalDiv.textContent = 'Erro ao carregar dados do usuário: ' + err.message;
+                messageUsuarioModalDiv.className = 'message-feedback error';
+                messageUsuarioModalDiv.style.display = 'block';
+                setTimeout(() => { if (messageUsuarioModalDiv) messageUsuarioModalDiv.style.display = 'none'; }, 5000);
+            }
+        } finally {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        }
+    }
+
+    // --- LÓGICA DA LISTAGEM ---
+    function displayUsers(users) { /* ... (seu código displayUsers como antes, mas o botão Editar agora chama mostrarFormularioUsuario(true, userId)) ... */
+        if (!tbody) { /* ... */ return; }
+        tbody.innerHTML = ''; 
+        ['loadingMessagePesqUser', 'errorMessagePesqUser', 'noResultsMessagePesqUser'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.style.display = 'none';
+        });
+
+        if (users && Array.isArray(users) && users.length > 0) {
+            if(usersTableEl) usersTableEl.style.display = 'table';
+            
+            users.forEach(function(user) {
+                const row = tbody.insertRow();
+                const userId = user.ID_Usuario; 
+                
+                row.insertCell().textContent = userId;
+                row.insertCell().textContent = user.Nome_Usuario || 'N/D'; 
+                row.insertCell().textContent = user.Nome_Completo || 'N/D';
+                row.insertCell().textContent = user.Nivel_Acesso || 'N/D';
+                
+                const cellAcoes = row.insertCell();
+                cellAcoes.classList.add('actions-cell-usuarios');
+                
+                const btnEditar = document.createElement('button');
+                btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit; vertical-align:text-bottom;"></span> Editar';
+                btnEditar.className = 'btn-table-action edit btn-sm'; 
+                btnEditar.type = 'button';
+                btnEditar.onclick = function() {
+                    mostrarFormularioUsuario(true, userId); // Chama para mostrar o form na mesma página
+                };
+                cellAcoes.appendChild(btnEditar);
+
+                const btnExcluir = document.createElement('button');
+                btnExcluir.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit; vertical-align:text-bottom;"></span> Excluir';
+                btnExcluir.className = 'btn-table-action danger btn-sm'; 
+                btnExcluir.type = 'button';
+                btnExcluir.onclick = function() {
+                    if (confirm("Tem certeza que deseja excluir o usuário '" + user.Nome_Usuario + "' (ID: " + userId + ")?")) {
+                        deleteUserLocal(userId);
+                    }
+                };
+                cellAcoes.appendChild(btnExcluir);
+            });
+        } else {
+            if(usersTableEl) usersTableEl.style.display = 'none';
+            if(noResultsMessageEl) {
+                noResultsMessageEl.textContent = "Nenhum usuário encontrado.";
+                noResultsMessageEl.style.display = 'block';
+            }
+        }
+    }
+
+    async function deleteUserLocal(userId) { /* ... (seu código deleteUserLocal como antes, usando userActionMessageEl para feedback) ... */ }
+
+    function getCurrentUserSearchCriteria() {
+        const criteria = {};
+        if (searchUserUsernameEl && searchUserUsernameEl.value.trim()) {
+            criteria.username = searchUserUsernameEl.value.trim();
+        }
+        return criteria;
+    }
+
+    async function fetchUsers(searchCriteria = {}) { 
+        if (loadingMessageEl) loadingMessageEl.style.display = 'block';
+        // ... (limpar outras mensagens, esconder tabela) ...
+        ['errorMessagePesqUser', 'noResultsMessagePesqUser'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.style.display = 'none';
+        });
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+        try {
+            const users = await searchUsersAPI(searchCriteria); // Usa searchUsersAPI
+            displayUsers(users);
+        } catch (error) { /* ... (tratamento de erro como no seu código original) ... */ }
+        finally { if(typeof showGlobalLoading === 'function') showGlobalLoading(false); }
+    }
+    
+    // --- EVENT LISTENERS ---
+    if (btnAbrirFormNovoUsuario) {
+        btnAbrirFormNovoUsuario.addEventListener('click', () => mostrarFormularioUsuario(true, null));
+    }
+    if (cancelUsuarioButtonModal) {
+        cancelUsuarioButtonModal.addEventListener('click', () => mostrarFormularioUsuario(false));
+    }
+    if (searchUserForm) {
+        searchUserForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            fetchUsers(getCurrentUserSearchCriteria());
+        });
+    }
+
+    if (formUsuarioModal) {
+        formUsuarioModal.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (submitUsuarioButtonModal.disabled) return;
+
+            const senha = senhaUsuarioModalEl.value;
+            const confirmarSenha = confirmarSenhaUsuarioModalEl.value;
+
+            if (!editandoUsuarioId && !senha) { // Novo usuário, senha é obrigatória
+                if(messageUsuarioModalDiv) { /* ... (mensagem "Senha é obrigatória") ... */ }
+                return;
+            }
+            if (senha && senha !== confirmarSenha) {
+                if(messageUsuarioModalDiv) { /* ... (mensagem "Senhas não coincidem") ... */ }
+                return;
+            }
+
+            submitUsuarioButtonModal.disabled = true;
+            submitUsuarioButtonModal.textContent = editandoUsuarioId ? 'Atualizando...' : 'Salvando...';
+            if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+            const userDataPayload = { // Chaves devem corresponder ao que saveUser no backend espera
+                nomeUsuario: nomeUsuarioModalEl.value, // Nome de usuário não será enviado se estiver editando e desabilitado
+                nomeCompleto: nomeCompletoUsuarioModalEl.value,
+                nivelAcesso: nivelAcessoUsuarioModalEl.value,
+                // Envia senha apenas se estiver criando ou se foi digitada ao editar
+                senha: (senha && editandoUsuarioId) || !editandoUsuarioId ? senha : undefined 
+            };
+            // Se estiver editando e a senha não foi alterada, não envia a chave 'senha'
+            // A lógica no backend saveUser já mantém a senha antiga se não for enviada uma nova.
+
+            try {
+                const response = await saveUserAPI(userDataPayload, editandoUsuarioId);
+                if (messageUsuarioModalDiv) { /* ... (exibir mensagem de sucesso/erro) ... */ }
+                if (response.status === 'success') {
+                    mostrarFormularioUsuario(false); 
+                    fetchUsers(getCurrentUserSearchCriteria()); // Atualiza a lista
+                }
+            } catch (err) { /* ... (erro) ... */ }
+            finally { 
+                submitUsuarioButtonModal.disabled = false;
+                // ... (restaurar texto do botão)
+                if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            }
+        });
+    }
+
+    // --- INICIALIZAÇÃO DA PÁGINA ---
+    function initPageUsuarios() {
+        // popularDropdownNivelAcesso se necessário (mas o select já tem opções fixas)
+        fetchUsers({}); // Carrega a lista inicial
+        mostrarFormularioUsuario(false); // Garante que o form de usuário comece oculto
+    }
+    
+    // Garante que elementos principais existem antes de inicializar
+    if (tbody && searchUserForm && btnAbrirFormNovoUsuario && formSectionUsuario && formUsuarioModal) {
+        initPageUsuarios();
+    } else {
+        console.error("Elementos essenciais da página de gerenciamento de usuários não foram encontrados.");
+        if(errorMessageEl) {
+            errorMessageEl.textContent = "Erro ao inicializar a página de usuários. Tente recarregar.";
+            errorMessageEl.className = 'message-feedback error';
+            errorMessageEl.style.display = 'block';
+        }
+    }
+})();
+</script>
+</body>
+</html>
