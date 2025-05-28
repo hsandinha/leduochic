@@ -1,4 +1,4 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwagFWH7iK8x4L-5YBPR2fvJsfKndbXcxDaiWsVJzBlJJ_qpsJLOBX3pKJQLHyCzMAm0A/exec"; 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjf7Ei3mHl4JYw51o3L4xMMD6DoBGpdhW2JIJ1uYcnKVBI-gA37yAB1yd9UDidx_hM3Q/exec"; 
 
 async function fetchData(action, params = {}) {
   let url = `${WEB_APP_URL}?action=${action}`;
@@ -139,3 +139,10 @@ function updateOrderTrackingCodeAPI(orderId, trackingCode) { return postData('up
 function getDashboardStatsAPI() { return fetchData('getDashboardStats'); }
 function getSalesReportAPI(startDate, endDate) { return fetchData('getSalesReport', { startDate, endDate }); }
 
+// --- Funções de Contas e Despesas ---
+function getFornecedorListAPI() { return fetchData('getFornecedorList');}
+function registrarContaDespesaAPI(despesaData) {return postData('registrarContaDespesa', { despesaData: despesaData });}
+function getDetalhesContaDespesaAPI(id) {return fetchData('getDetalhesContaDespesa', { contaDespesaId: id });}
+function atualizarContaDespesaAPI(id, despesaData) {return postData('atualizarContaDespesa', { contaDespesaIdToUpdate: id, despesaData: despesaData });}
+function getListaContasDespesasAPI(searchCriteria = {}) {return fetchData('getListaContasDespesas', searchCriteria);}
+function deleteContaDespesaAPI(id) { return postData('deleteContaDespesa', { contaDespesaId: id }); }

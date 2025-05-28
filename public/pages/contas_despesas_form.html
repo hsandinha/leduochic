@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    /* Estilos básicos para a página e formulário (reutilize suas classes CSS o máximo possível) */
+    .form-section-conta-despesa {
+      border: 1px solid var(--cinza-bordas);
+      padding: 1.5rem;
+      border-radius: 0.375rem;
+      margin-top: 1.5rem;
+      background-color: var(--cinza-fundo-conteudo); /* Um fundo levemente diferente para o form */
+    }
+    .actions-cell-contas {
+        min-width: 250px; /* Ajuste para "Pagar", "Editar", "Excluir" */
+        text-align: left;
+    }
+    /* Adicione estilos para inputs desabilitados se desejar */
+    input:disabled, select:disabled {
+        background-color: #e9ecef; /* Exemplo de cor para campo desabilitado */
+        cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+<div class="page-content-wrapper">
+  <div class="form-container"> <div id="listagemContasDespesasSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="pageTitleContasDespesas" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none; flex-grow: 1;">Contas e Despesas a Pagar/Pagas</h2>
+        <button type="button" id="btnAbrirFormNovaContaDespesa" class="btn-action-form">
+          Incluir Novo Lançamento
+        </button>
+      </div>
+      
+      <form id="searchContasDespesasFormHtml" class="mb-6" style="border-top: 1px solid var(--cinza-bordas); padding-top: 1.5rem;">
+        <div class="form-grid md:grid-cols-4">
+          <div>
+            <label for="filtroDescricaoConta">Filtrar por Descrição:</label>
+            <input type="text" id="filtroDescricaoConta" name="filtroDescricao">
+          </div>
+          <div>
+            <label for="filtroCategoriaConta">Filtrar por Categoria:</label>
+            <select id="filtroCategoriaConta" name="filtroCategoria">
+              <option value="">Todas</option>
+              <option value="Aluguel">Aluguel</option>
+              <option value="Fornecedores">Compras Fornecedor</option>
+              <option value="Marketing e Publicidade">Marketing e Publicidade</option>
+              <option value="Contas de Consumo">Contas de Consumo</option>
+              <option value="Material de Escritório">Material de Escritório</option>
+              <option value="Impostos e Taxas">Impostos e Taxas</option>
+              <option value="Serviços Profissionais">Serviços Profissionais</option>
+              <option value="Pró-labore / Salários">Pró-labore / Salários</option>
+              <option value="Manutenção">Manutenção</option>
+              <option value="Outro">Outras Despesas (especificada)</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtroStatusPagamentoConta">Filtrar por Status Pag.:</label>
+            <select id="filtroStatusPagamentoConta" name="filtroStatusPagamento">
+              <option value="">Todos</option>
+              <option value="A Pagar">A Pagar</option>
+              <option value="Pago">Pago</option>
+              <option value="Atrasado">Atrasado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn-action-form" style="height: 2.5rem; width: 100%;">Filtrar Lançamentos</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="loadingMessageContasDespesas" class="message-feedback" style="display:none;">Carregando lançamentos...</div>
+      <div id="errorMessageContasDespesas" class="message-feedback" style="display:none;"></div>
+      <div id="noResultsMessageContasDespesas" class="message-feedback" style="display:none;">Nenhum lançamento encontrado.</div>
+      
+      <div class="table-container">
+        <table id="contasDespesasTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Lançamento</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Favorecido/Fornecedor</th>
+              <th>Valor Prev.</th>
+              <th>Vencimento</th>
+              <th>Status Pag.</th>
+              <th class="actions-cell-contas">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyContasDespesas">
+             <tr><td colspan="9" style="text-align:center;">Aguardando pesquisa ou carregamento inicial...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div> <div id="formNovaContaDespesaContainer" class="form-section-conta-despesa" style="display:none;">
+      <h3 id="formTitleContaDespesaModal" style="margin-top:0; color: var(--rosa-profundo);">Novo Lançamento de Conta/Despesa</h3>
+      <form id="contaDespesaFormHtml_modal">
+        <input type="hidden" id="contaDespesaIdParaEditar" name="ID_ContaDespesa">
+
+        <div class="form-grid md:grid-cols-2">
+          <div class="md-col-span-2">
+            <label for="descricaoContaDespesa_modal">Descrição da Conta/Despesa:</label>
+            <input type="text" id="descricaoContaDespesa_modal" name="Descricao" required>
+          </div>
+          <div>
+            <label for="valorPrevistoContaDespesa_modal">Valor Previsto (R$):</label>
+            <input type="number" id="valorPrevistoContaDespesa_modal" name="Valor_Previsto" step="0.01" min="0" required>
+          </div>
+          <div>
+            <label for="dataVencimentoContaDespesa_modal">Data de Vencimento:</label>
+            <input type="date" id="dataVencimentoContaDespesa_modal" name="Data_Vencimento" required>
+          </div>
+          <div>
+            <label for="categoriaContaDespesa_modal">Categoria da Despesa:</label>
+            <select id="categoriaContaDespesa_modal" name="Categoria_Despesa_Select" required>
+              <option value="">Selecione...</option>
+              <option value="Aluguel">Aluguel</option>
+              <option value="Fornecedores">Compras Fornecedor</option>
+              <option value="Marketing e Publicidade">Marketing e Publicidade</option>
+              <option value="Contas de Consumo">Contas de Consumo (Água, Luz, Internet)</option>
+              <option value="Material de Escritório">Material de Escritório</option>
+              <option value="Impostos e Taxas">Impostos e Taxas</option>
+              <option value="Serviços Profissionais">Serviços Profissionais</option>
+              <option value="Pró-labore / Salários">Pró-labore / Salários</option>
+              <option value="Manutenção">Manutenção</option>
+              <option value="Outro">Outras Despesas</option>
+            </select>
+          </div>
+          <div id="outraCategoriaContainer_modal" class="full-width" style="display:none;"> <label for="outraCategoriaContaDespesa_modal">Especifique a Outra Categoria:</label>
+            <input type="text" id="outraCategoriaContaDespesa_modal" name="Outra_Categoria_Despesa">
+          </div>
+        </div>
+
+        <h5 style="font-size: 1.1em; color: var(--cinza-texto-principal); margin-top: 1.5rem; margin-bottom: 0.5rem;">Detalhes do Favorecido</h5>
+        <div class="form-grid md:grid-cols-2">
+            <div>
+                <label for="fornecedorIdContaDespesa_modal">Fornecedor Cadastrado:</label>
+                <select id="fornecedorIdContaDespesa_modal" name="ID_Fornecedor_FK">
+                    <option value="">Nenhum / Selecione...</option>
+                    </select>
+            </div>
+            <div>
+                <label for="nomeFornecedorOcasional_modal">Nome do Favorecido:</label>
+                <input type="text" id="nomeFornecedorOcasional_modal" name="Nome_Fornecedor_Ocasional">
+            </div>
+        </div>
+
+        <div class="full-width" style="margin-top:1rem;">
+          <label for="observacoesContaDespesa_modal">Observações:</label>
+          <textarea id="observacoesContaDespesa_modal" name="Observacoes" rows="3"></textarea>
+        </div>
+        
+        <div id="detalhesPagamentoSection_modal" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px dashed var(--cinza-bordas); display:none;">
+            <h5 style="font-size: 1.1em; color: var(--cinza-texto-principal); margin-top: 0;">Detalhes do Pagamento</h5>
+            <div class="form-grid md:grid-cols-3">
+                <div>
+                    <label for="statusPagamento_modal">Status do Pagamento:</label>
+                    <select id="statusPagamento_modal" name="Status_Pagamento">
+                        <option value="A Pagar">A Pagar</option>
+                        <option value="Pago">Pago</option>
+                        <option value="Atrasado">Atrasado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="dataPagamento_modal">Data do Pagamento:</label>
+                    <input type="date" id="dataPagamento_modal" name="Data_Pagamento">
+                </div>
+                <div>
+                    <label for="valorPago_modal">Valor Pago (R$):</label>
+                    <input type="number" id="valorPago_modal" name="Valor_Pago" step="0.01" min="0">
+                </div>
+                <div class="md-col-span-2"> <label for="formaPagamentoUtilizada_modal">Forma de Pagamento Utilizada:</label>
+                    <select id="formaPagamentoUtilizada_modal" name="Forma_Pagamento_Utilizada" class="form-container-select"> <option value="">Selecione a forma de pagamento...</option>
+                        <option value="PIX">PIX</option>
+                        <option value="Boleto Bancário">Boleto Bancário</option>
+                        <option value="Transferência Bancária">Transferência Bancária (TED/DOC)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito (Empresa)</option>
+                        <option value="Cartão de Débito">Cartão de Débito (Empresa)</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+                <div class="md-col-span-1"> </div>
+                <div class="md-col-span-3">
+                    <label for="referenciaComprovante_modal">Comprovante:</label>
+                    <input type="file" id="referenciaComprovante_modal" name="Referencia_Comprovante">
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" id="cancelContaDespesaButton_modal" class="btn-secondary" style="margin-right: 10px;">Cancelar</button>
+          <button type="submit" id="submitContaDespesaButton_modal" class="btn-action-form">
+            Salvar Lançamento
+          </button>
+        </div>
+      </form>
+      <div id="messageContaDespesa_modal" class="message-feedback" style="display:none;"></div>
+    </div> </div> 
+</div> 
+
+<script>
+    
+(function() {
+    console.log("Script de pesquisar_contas_despesas_form.html (combinado) executando.");
+
+    const listagemSection = document.getElementById('listagemContasDespesasSection');
+    const searchFormEl = document.getElementById('searchContasDespesasFormHtml');
+    const tbodyContasDespesas = document.getElementById('tbodyContasDespesas');
+    const btnAbrirFormNova = document.getElementById('btnAbrirFormNovaContaDespesa');
+    const loadingMsgList = document.getElementById('loadingMessageContasDespesas');
+    const errorMsgList = document.getElementById('errorMessageContasDespesas');
+    const noResultsMsgList = document.getElementById('noResultsMessageContasDespesas');
+    const filtroDescricaoEl = document.getElementById('filtroDescricaoConta');
+    const filtroCategoriaEl = document.getElementById('filtroCategoriaConta');
+    const filtroStatusEl = document.getElementById('filtroStatusPagamentoConta');
+
+    const formSection = document.getElementById('formNovaContaDespesaContainer');
+    const formContaDespesa = document.getElementById('contaDespesaFormHtml_modal');
+    const formTitleModalEl = document.getElementById('formTitleContaDespesaModal');
+    const contaDespesaIdField = document.getElementById('contaDespesaIdParaEditar');
+    const descricaoModalEl = document.getElementById('descricaoContaDespesa_modal');
+    const valorPrevistoModalEl = document.getElementById('valorPrevistoContaDespesa_modal');
+    const dataVencimentoModalEl = document.getElementById('dataVencimentoContaDespesa_modal');
+    const categoriaSelectModalEl = document.getElementById('categoriaContaDespesa_modal');
+    const outraCategoriaContainerModalEl = document.getElementById('outraCategoriaContainer_modal');
+    const outraCategoriaInputModalEl = document.getElementById('outraCategoriaContaDespesa_modal');
+    const fornecedorSelectModalEl = document.getElementById('fornecedorIdContaDespesa_modal');
+    const nomeFornecedorOcasionalModalEl = document.getElementById('nomeFornecedorOcasional_modal');
+    const observacoesModalEl = document.getElementById('observacoesContaDespesa_modal');
+    const detalhesPagamentoSectionModalEl = document.getElementById('detalhesPagamentoSection_modal');
+    const statusPagamentoModalEl = document.getElementById('statusPagamento_modal');
+    const dataPagamentoModalEl = document.getElementById('dataPagamento_modal');
+    const valorPagoModalEl = document.getElementById('valorPago_modal');
+    const formaPagamentoUtilizadaModalEl = document.getElementById('formaPagamentoUtilizada_modal');
+    const referenciaComprovanteModalEl = document.getElementById('referenciaComprovante_modal');
+    const submitContaDespesaButtonModal = document.getElementById('submitContaDespesaButton_modal');
+    const cancelContaDespesaButtonModal = document.getElementById('cancelContaDespesaButton_modal');
+    const messageModalDiv = document.getElementById('messageContaDespesa_modal');
+
+    let editandoContaDespesaId = null; 
+    let registrandoPagamento = false; // Flag para controlar se estamos no modo de registrar pagamento
+
+    function mostrarFormulario(mostrar = true, idParaEditar = null, isPaymentRegistration = false) {
+        registrandoPagamento = isPaymentRegistration;
+        if (mostrar) {
+            listagemSection.style.display = 'none';
+            formSection.style.display = 'block';
+            editandoContaDespesaId = idParaEditar;
+            
+            formContaDespesa.reset(); 
+            outraCategoriaContainerModalEl.style.display = 'none';
+            outraCategoriaInputModalEl.required = false;
+            detalhesPagamentoSectionModalEl.style.display = 'none';
+            statusPagamentoModalEl.value = "A Pagar";
+            dataVencimentoModalEl.value = new Date().toISOString().split('T')[0];
+            
+            // Habilitar/desabilitar campo de fornecedor ocasional
+            if (fornecedorSelectModalEl.value) {
+                nomeFornecedorOcasionalModalEl.disabled = true;
+                nomeFornecedorOcasionalModalEl.value = '';
+            } else {
+                nomeFornecedorOcasionalModalEl.disabled = false;
+            }
+
+            if (idParaEditar) {
+                formTitleModalEl.textContent = registrandoPagamento ? "Registrar Pagamento" : "Editar Lançamento";
+                submitContaDespesaButtonModal.textContent = registrandoPagamento ? "Confirmar Pagamento" : "Atualizar Lançamento";
+                carregarDadosParaEdicao(idParaEditar); // Carrega dados e ajusta campos de pagamento se necessário
+            } else {
+                formTitleModalEl.textContent = "Novo Lançamento de Conta/Despesa";
+                submitContaDespesaButtonModal.textContent = "Salvar Lançamento";
+            }
+        } else {
+            listagemSection.style.display = 'block';
+            formSection.style.display = 'none';
+            editandoContaDespesaId = null;
+            registrandoPagamento = false;
+        }
+    }
+
+async function popularDropdownFornecedoresModal() {
+    if (!fornecedorSelectModalEl) return;
+    try {
+        const fornecedores = await getFornecedorListAPI();
+        fornecedorSelectModalEl.innerHTML = '<option value="">Sem Cadastro</option>';
+        if (fornecedores && fornecedores.length > 0) {
+            fornecedores.forEach(forn => {
+                if (forn && forn.length === 2) fornecedorSelectModalEl.add(new Option(forn[1] + ` (ID: ${forn[0]})`, forn[0]));
+            });
+            
+            // Armazena os fornecedores em uma variável global ou em um atributo de dados
+            // para acessá-los no event listener
+            fornecedorSelectModalEl.dataset.fornecedores = JSON.stringify(fornecedores);
+        }
+    } catch (e) { console.error("Erro ao carregar fornecedores no form:", e); }
+}
+
+if (categoriaSelectModalEl) {
+    categoriaSelectModalEl.addEventListener('change', function() {
+        if (this.value === 'Outro') {
+            outraCategoriaContainerModalEl.style.display = 'block';
+            outraCategoriaInputModalEl.required = true;
+            outraCategoriaInputModalEl.focus();
+        } else {
+            outraCategoriaContainerModalEl.style.display = 'none';
+            outraCategoriaInputModalEl.required = false;
+            outraCategoriaInputModalEl.value = '';
+        }
+    });
+}
+
+if (fornecedorSelectModalEl && nomeFornecedorOcasionalModalEl) {
+    fornecedorSelectModalEl.addEventListener('change', function() {
+        const fornecedorId = this.value;
+        
+        if (fornecedorId) { 
+            // Desabilita o campo de nome ocasional
+            nomeFornecedorOcasionalModalEl.disabled = true;
+            nomeFornecedorOcasionalModalEl.required = false;
+            
+            try {
+                // Recupera os fornecedores do atributo de dados
+                const fornecedores = JSON.parse(this.dataset.fornecedores || '[]');
+                
+                // Encontra o fornecedor com o ID selecionado
+                const fornecedorSelecionado = fornecedores.find(forn => forn[0] == fornecedorId);
+                
+                // Se encontrou, preenche o nome
+                if (fornecedorSelecionado) {
+                    nomeFornecedorOcasionalModalEl.value = fornecedorSelecionado[1];
+                } else {
+                    console.warn("Fornecedor não encontrado com ID:", fornecedorId);
+                    nomeFornecedorOcasionalModalEl.value = '';
+                }
+            } catch (e) {
+                console.error("Erro ao processar fornecedor selecionado:", e);
+                nomeFornecedorOcasionalModalEl.value = '';
+            }
+        } else { 
+            // Se nenhum fornecedor foi selecionado, habilita o campo
+            nomeFornecedorOcasionalModalEl.disabled = false;
+            nomeFornecedorOcasionalModalEl.required = true;
+            nomeFornecedorOcasionalModalEl.value = '';
+        }
+    });
+}
+
+    if(statusPagamentoModalEl) {
+        statusPagamentoModalEl.addEventListener('change', function() {
+            if(this.value === 'Pago') {
+                detalhesPagamentoSectionModalEl.style.display = 'block';
+                dataPagamentoModalEl.required = true;
+                valorPagoModalEl.required = true;
+                // formaPagamentoUtilizadaModalEl.required = true; // Deixe opcional ou defina conforme sua regra
+                if(!dataPagamentoModalEl.value) dataPagamentoModalEl.value = new Date().toISOString().split('T')[0];
+                if(!valorPagoModalEl.value && valorPrevistoModalEl.value) valorPagoModalEl.value = parseFloat(valorPrevistoModalEl.value).toFixed(2);
+            } else {
+                detalhesPagamentoSectionModalEl.style.display = 'none';
+                dataPagamentoModalEl.required = false;
+                valorPagoModalEl.required = false;
+                // formaPagamentoUtilizadaModalEl.required = false;
+                // Limpar campos de pagamento se não for "Pago"
+                dataPagamentoModalEl.value = '';
+                valorPagoModalEl.value = '';
+                formaPagamentoUtilizadaModalEl.value = '';
+                referenciaComprovanteModalEl.value = '';
+            }
+        });
+    }
+
+    async function carregarDadosParaEdicao(id) {
+    if (!id) {
+        console.error("carregarDadosParaEdicao: ID não fornecido.");
+        // Você pode querer mostrar uma mensagem para o usuário aqui também
+        return;
+    }
+    formTitleModalEl.textContent = `Carregando Lançamento ID: ${id}...`;
+    if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+    
+    // Limpa os campos do formulário antes de preencher
+    formContaDespesa.reset();
+    outraCategoriaContainerModalEl.style.display = 'none';
+    outraCategoriaInputModalEl.required = false;
+    detalhesPagamentoSectionModalEl.style.display = 'none';
+    statusPagamentoModalEl.value = "A Pagar"; // Reset para padrão
+
+    try {
+        // getDetalhesContaDespesaAPI deve estar no seu api.js e chamar a action correta
+        const details = await getDetalhesContaDespesaAPI(id); 
+        console.log("Detalhes da Conta/Despesa recebidos para edição:", details);
+
+        if (details && details.iDContaDespesa) { // Verifica se 'details' é válido e tem o ID esperado
+            contaDespesaIdField.value = details.iDContaDespesa;
+            descricaoModalEl.value = details.descricao || '';
+            valorPrevistoModalEl.value = details.valorPrevisto || '';
+            
+            if(details.dataVencimento) {
+                // A data do backend vem como "YYYY-MM-DD HH:MM:SS"
+                // O input date espera "YYYY-MM-DD"
+                dataVencimentoModalEl.value = details.dataVencimento.split(' ')[0];
+            } else {
+                dataVencimentoModalEl.value = '';
+            }
+
+            // Tratar categoria (como na sua lógica anterior)
+            const categoriaValor = details.categoriaDespesa || '';
+            const isStandardCategory = Array.from(categoriaSelectModalEl.options).some(opt => opt.value === categoriaValor);
+            if (isStandardCategory) {
+                categoriaSelectModalEl.value = categoriaValor;
+                outraCategoriaContainerModalEl.style.display = 'none';
+                outraCategoriaInputModalEl.required = false;
+                outraCategoriaInputModalEl.value = '';
+            } else if (categoriaValor) { 
+                categoriaSelectModalEl.value = 'Outro';
+                outraCategoriaContainerModalEl.style.display = 'block';
+                outraCategoriaInputModalEl.required = true;
+                outraCategoriaInputModalEl.value = categoriaValor;
+            } else { 
+                 categoriaSelectModalEl.value = ''; 
+            }
+            
+            // **PARTE CRÍTICA PARA O FORNECEDOR**
+             console.log(fornecedorSelectModalEl.value);
+            if (fornecedorSelectModalEl!='') {
+                const fornecedorIdSalvo = details.iDFornecedorFK;
+
+                console.log("Tentando selecionar Fornecedor ID no dropdown:", fornecedorIdSalvo);
+                fornecedorSelectModalEl.value = fornecedorIdSalvo;
+
+                // Força a execução do listener de 'change' para atualizar o estado do campo "Nome_Fornecedor_Ocasional"
+                fornecedorSelectModalEl.dispatchEvent(new Event('change')); 
+            }
+                console.log(details.nomeFornecedorOcasional);
+                nomeFornecedorOcasionalModalEl.value = details.nomeFornecedorOcasional;
+            
+            
+            if (observacoesModalEl) observacoesModalEl.value = details.observacoes || '';
+            
+            if (statusPagamentoModalEl) {
+                statusPagamentoModalEl.value = details.statusPagamento || 'A Pagar';
+                // Dispara o evento change para mostrar/ocultar campos de pagamento corretamente
+                statusPagamentoModalEl.dispatchEvent(new Event('change')); 
+            }
+            
+            // Preenche os campos de pagamento se já existirem e o status for 'Pago'
+            // A lógica no 'change' do statusPagamentoModalEl já deve cuidar da visibilidade e required
+            if (details.statusPagamento === 'Pago') {
+                if(dataPagamentoModalEl && details.dataPagamento) dataPagamentoModalEl.value = details.dataPagamento.split(' ')[0];
+                if(valorPagoModalEl) valorPagoModalEl.value = details.valorPago || '';
+                if(formaPagamentoUtilizadaModalEl) formaPagamentoUtilizadaModalEl.value = details.formaPagamentoUtilizada || '';
+                if(referenciaComprovanteModalEl) referenciaComprovanteModalEl.value = details.referenciaComprovante || '';
+            }
+
+            formTitleModalEl.textContent = registrandoPagamento ? `Registrar Pagamento para: ${details.descricao}` : `Editar Lançamento (ID: ${details.iDContaDespesa})`;
+            submitContaDespesaButtonModal.textContent = registrandoPagamento ? "Confirmar Pagamento" : "Atualizar Lançamento";
+            if (cancelContaDespesaButtonModal) cancelContaDespesaButtonModal.style.display = 'inline-block';
+
+                if (registrandoPagamento) { // Se clicou em "Pagar"
+                    formTitleModalEl.textContent = `Registrar Pagamento para: ${details.descricao}`;
+                    submitContaDespesaButtonModal.textContent = "Confirmar Pagamento";
+                    statusPagamentoModalEl.value = 'Pago'; // Força status para Pago
+                    statusPagamentoModalEl.dispatchEvent(new Event('change')); // Mostra campos de pagamento
+                    if(!dataPagamentoModalEl.value) dataPagamentoModalEl.value = new Date().toISOString().split('T')[0];
+                    if(!valorPagoModalEl.value) valorPagoModalEl.value = parseFloat(details.valorPrevisto || 0).toFixed(2);
+                    dataPagamentoModalEl.focus();
+                }
+
+        } else { 
+            throw new Error("Lançamento não encontrado ou dados de resposta inválidos."); 
+        }
+    } catch (err) { 
+        console.error("Falha ao obter detalhes da conta/despesa para edição:", err);
+        if(messageModalDiv){
+            messageModalDiv.textContent = 'Erro ao carregar dados para edição: ' + err.message;
+            messageModalDiv.className = 'message-feedback error';
+            messageModalDiv.style.display = 'block';
+            setTimeout(() => { if (messageModalDiv) messageModalDiv.style.display = 'none'; }, 5000);
+        }
+        // Se falhar ao carregar, volta para a visualização da lista para evitar um formulário vazio/inconsistente
+        mostrarFormulario(false); 
+    }
+    finally { if (typeof showGlobalLoading === 'function') showGlobalLoading(false); }
+}
+
+    function displayContasDespesas(items) {
+        if (!tbodyContasDespesas) return;
+        tbodyContasDespesas.innerHTML = '';
+        ['loadingMessageContasDespesas', 'errorMessageContasDespesas', 'noResultsMessageContasDespesas'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+
+        if (items && items.length > 0) {
+            document.getElementById('contasDespesasTable').style.display = 'table';
+            items.forEach(item => {
+                const row = tbodyContasDespesas.insertRow();
+                row.insertCell().textContent = item.iDContaDespesa;
+                
+                let dataLanc = item.dataLancamento;
+                if (dataLanc && typeof dataLanc === 'string' && dataLanc.includes(' ')) {
+                     dataLanc = new Date(dataLanc.split(' ')[0] + 'T00:00:00').toLocaleDateString('pt-BR');
+                }
+                row.insertCell().textContent = dataLanc || 'N/A';
+                row.insertCell().textContent = item.descricao || 'N/A';
+                row.insertCell().textContent = item.categoriaDespesa || 'N/A';
+                row.insertCell().textContent = item.nomeFornecedorOcasional || (item.iDFonecedorFK ? `ID Forn: ${item.iDFonecedorFK}` : 'N/A'); // Melhorar para buscar nome do fornecedor
+                row.insertCell().textContent = `R$ ${parseFloat(item.valorPrevisto || 0).toFixed(2)}`;
+                
+                let dataVenc = item.dataVencimento;
+                if (dataVenc && typeof dataVenc === 'string' && dataVenc.includes(' ')) {
+                     dataVenc = new Date(dataVenc.split(' ')[0] + 'T00:00:00').toLocaleDateString('pt-BR');
+                }
+                row.insertCell().textContent = dataVenc || 'N/A';
+                
+                const cellStatus = row.insertCell();
+                cellStatus.textContent = item.statusPagamento || 'N/A';
+                if(item.statusPagamento === 'Pago') cellStatus.style.color = 'var(--verde-sucesso-texto)';
+                else if(item.statusPagamento === 'Atrasado' || (item.statusPagamento === 'A Pagar' && new Date(item.dataVencimento) < new Date())) {
+                    cellStatus.textContent = 'Atrasado'; // Recalcula status Atrasado visualmente
+                    cellStatus.style.color = 'var(--vermelho-erro-texto)';
+                } else if (item.statusPagamento === 'A Pagar') {
+                    cellStatus.style.color = 'var(--laranja-aviso)';
+                }
+
+
+                const cellAcoes = row.insertCell();
+                cellAcoes.classList.add('actions-cell-contas');
+
+                if (item.statusPagamento !== 'Pago' && item.statusPagamento !== 'Cancelado') {
+                    const btnPagar = document.createElement('button');
+                    btnPagar.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit;vertical-align:text-bottom;"></span> Pagar';
+                    btnPagar.className = 'btn-table-action warning btn-sm';
+                    btnPagar.type = 'button';
+                    btnPagar.onclick = () => mostrarFormulario(true, item.iDContaDespesa, true); // true para isPaymentRegistration
+                    cellAcoes.appendChild(btnPagar);
+                }
+                
+
+                if (item.statusPagamento !== 'Pago' && item.statusPagamento !== 'Cancelado') {
+                const btnEditar = document.createElement('button');
+                btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit;vertical-align:text-bottom;"></span> Editar';
+                btnEditar.className = 'btn-table-action edit btn-sm';
+                btnEditar.type = 'button';
+                btnEditar.onclick = () => mostrarFormulario(true, item.iDContaDespesa, false); // false para isPaymentRegistration
+                cellAcoes.appendChild(btnEditar);
+                }
+
+                if (item.statusPagamento !== 'Pago' && item.statusPagamento !== 'Cancelado') {
+                const btnExcluir = document.createElement('button');
+                btnExcluir.innerHTML = '<span class="material-symbols-outlined" style="font-size:inherit; vertical-align: text-bottom; margin-right: 4px;"></span>Excluir';
+                btnExcluir.className = 'btn-table-action danger btn-sm'; // Suas classes CSS
+                btnExcluir.type = 'button';
+                btnExcluir.title = "Excluir este lançamento";
+                btnExcluir.onclick = async function() {
+                    // item.descricao e item.iDContaDespesa vêm do objeto 'item' no loop
+                    if (confirm(`Tem certeza que deseja excluir o lançamento "${item.descricao || 'Sem descrição'}" (ID: ${item.iDContaDespesa})? Esta ação não pode ser desfeita.`)) {
+                        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+                        // Usa errorMsgList para feedback, pois messageModalDiv é do formulário oculto.
+                        // Ou crie um messageListDiv se preferir.
+                        if (errorMsgList) errorMsgList.style.display = 'none'; 
+
+                        try {
+                            // deleteContaDespesaAPI deve estar no seu api.js e chamar a action correta no backend
+                            const response = await deleteContaDespesaAPI(item.iDContaDespesa); 
+                            
+                            if (errorMsgList) { // Usando errorMsgList para feedback na listagem
+                                errorMsgList.textContent = response.message;
+                                errorMsgList.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                                errorMsgList.style.display = 'block';
+                                setTimeout(() => { if (errorMsgList) errorMsgList.style.display = 'none'; }, 5000);
+                            }
+
+                            if (response.status === "success") {
+                                fetchContasDespesas(getCurrentContasDespesasSearchCriteria()); // Recarrega a lista com os filtros atuais
+                            }
+                        } catch (error) {
+                            console.error("Erro ao excluir conta/despesa via API:", error);
+                            if (errorMsgList) {
+                                errorMsgList.textContent = 'Erro ao excluir lançamento: ' + error.message;
+                                errorMsgList.className = 'message-feedback error';
+                                errorMsgList.style.display = 'block';
+                                setTimeout(() => { if (errorMsgList) errorMsgList.style.display = 'none'; }, 5000);
+                            }
+                        } finally {
+                            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+                        }
+                    }
+                };
+                cellAcoes.appendChild(btnExcluir);
+            }
+            });
+        } else {
+            document.getElementById('contasDespesasTable').style.display = 'none';
+            const msg = Object.keys(getCurrentContasDespesasSearchCriteria()).length > 0 ? 
+                        "Nenhum lançamento encontrado com os critérios fornecidos." :
+                        "Nenhum lançamento cadastrado ainda.";
+            document.getElementById('noResultsMessageContasDespesas').textContent = msg;
+            document.getElementById('noResultsMessageContasDespesas').style.display = 'block';
+        }
+    }
+
+    function getCurrentContasDespesasSearchCriteria() {
+        const criteria = {
+            descricao: filtroDescricaoEl ? filtroDescricaoEl.value : '',
+            categoria: filtroCategoriaEl ? filtroCategoriaEl.value : '',
+            statusPagamento: filtroStatusEl ? filtroStatusEl.value : ''
+        };
+        for(const key in criteria){ if(!criteria[key]) delete criteria[key];}
+        return criteria;
+    }
+
+    async function fetchContasDespesas(searchCriteria = {}) {
+        if (loadingMsgList) loadingMsgList.style.display = 'block';
+        ['errorMessageContasDespesas', 'noResultsMessageContasDespesas'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+        if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        try {
+            // Crie getListaContasDespesasAPI em api.js e a action no backend
+            const items = await getListaContasDespesasAPI(searchCriteria); 
+            displayContasDespesas(items);
+        } catch(e) { 
+             if(loadingMsgList) loadingMsgList.style.display = 'none';
+             if(errorMsgList) {
+                 errorMsgList.textContent = "Erro ao carregar lançamentos: " + e.message;
+                 errorMsgList.className = 'message-feedback error';
+                 errorMsgList.style.display = 'block';
+             }
+             console.error("Erro ao buscar contas/despesas:", e);
+        }
+        finally{ if(typeof showGlobalLoading === 'function') showGlobalLoading(false); }
+    }
+    
+    if (btnAbrirFormNova) {
+        btnAbrirFormNova.addEventListener('click', () => mostrarFormulario(true, null, false));
+    }
+    if (cancelContaDespesaButtonModal) {
+        cancelContaDespesaButtonModal.addEventListener('click', () => mostrarFormulario(false));
+    }
+    if (searchFormEl) {
+        searchFormEl.addEventListener('submit', (e) => {
+            e.preventDefault();
+            fetchContasDespesas(getCurrentContasDespesasSearchCriteria());
+        });
+    }
+
+    if (formContaDespesa) {
+        formContaDespesa.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (submitContaDespesaButtonModal.disabled) return;
+
+            if (categoriaSelectModalEl.value === 'Outro' && !outraCategoriaInputModalEl.value.trim()) {
+                // ... (validação) ...
+                return;
+            }
+            
+            submitContaDespesaButtonModal.disabled = true;
+            submitContaDespesaButtonModal.textContent = editandoContaDespesaId ? 'Atualizando...' : 'Salvando...';
+            if(typeof showGlobalLoading === 'function') showGlobalLoading(true);
+
+            let categoriaFinalSubmit = categoriaSelectModalEl.value;
+            if (categoriaSelectModalEl.value === 'Outro') {
+                categoriaFinalSubmit = outraCategoriaInputModalEl.value.trim();
+            }
+
+            const dataPayload = { // As chaves aqui DEVEM corresponder ao que o backend espera (provavelmente os nomes dos CABECALHOS)
+                Descricao: descricaoModalEl.value,
+                Valor_Previsto: valorPrevistoModalEl.value,
+                Data_Vencimento: dataVencimentoModalEl.value,
+                Categoria_Despesa: categoriaFinalSubmit,
+                ID_Fornecedor_FK: fornecedorSelectModalEl.value,
+                Nome_Fornecedor_Ocasional: nomeFornecedorOcasionalModalEl.value,
+                Observacoes: observacoesModalEl.value,
+                // Campos de pagamento são incluídos se o status for 'Pago'
+                Status_Pagamento: statusPagamentoModalEl.value,
+                Data_Pagamento: statusPagamentoModalEl.value === 'Pago' ? dataPagamentoModalEl.value : null,
+                Valor_Pago: statusPagamentoModalEl.value === 'Pago' ? valorPagoModalEl.value : null,
+                Forma_Pagamento_Utilizada: statusPagamentoModalEl.value === 'Pago' ? formaPagamentoUtilizadaModalEl.value : null,
+                Referencia_Comprovante: statusPagamentoModalEl.value === 'Pago' ? referenciaComprovanteModalEl.value : null
+            };
+
+            try {
+                let response;
+                if (editandoContaDespesaId) {
+                    // No backend, a função 'atualizarContaDespesa' (ou a sua 'registrarContaDespesa' adaptada para update)
+                    // precisa lidar com a atualização de todos os campos, incluindo os de pagamento.
+                    // Se for apenas um registro de pagamento em um item existente, a ação poderia ser 'marcarComoPagoContaDespesaAPI'
+                    // Mas aqui, estamos salvando o formulário inteiro.
+                    response = await atualizarContaDespesaAPI(editandoContaDespesaId, dataPayload); 
+                } else {
+                    response = await registrarContaDespesaAPI(dataPayload);
+                }
+
+                if (messageModalDiv) { 
+                    messageModalDiv.textContent = response.message;
+                    messageModalDiv.className = response.status === "success" ? 'message-feedback success' : 'message-feedback error';
+                    messageModalDiv.style.display = 'block';
+                    setTimeout(() => { if (messageModalDiv) messageModalDiv.style.display = 'none'; }, 5000);
+                }
+                if (response.status === 'success') {
+                    mostrarFormulario(false); 
+                    fetchContasDespesas(getCurrentContasDespesasSearchCriteria()); 
+                }
+            } catch (err) { 
+                if (messageModalDiv) { /* ... erro ... */ }
+                console.error("Erro ao salvar conta/despesa:", err);
+            }
+            finally { 
+                submitContaDespesaButtonModal.disabled = false;
+                submitContaDespesaButtonModal.textContent = editandoContaDespesaId ? 'Atualizar Lançamento' : 'Salvar Lançamento';
+                if(registrandoPagamento) submitContaDespesaButtonModal.textContent = 'Confirmar Pagamento'; // Restaura se estava pagando
+                if(typeof showGlobalLoading === 'function') showGlobalLoading(false);
+            }
+        });
+    }
+
+    function initPage() {
+        if (typeof showGlobalLoading === 'function') showGlobalLoading(true);
+        Promise.all([
+            popularDropdownFornecedoresModal() // Popula dropdown do formulário de edição/criação
+            // Adicionar aqui popularDropdownCategoriasFiltro() se o filtro de categoria da lista for dinâmico
+        ]).then(() => {
+            fetchContasDespesas({}); 
+            mostrarFormulario(false); 
+        }).catch(err => {
+            console.error("Erro na inicialização da página de Contas/Despesas:", err);
+            if(errorMsgList){
+                errorMsgList.textContent = "Erro ao inicializar a página: " + err.message;
+                errorMsgList.className = 'message-feedback error';
+                errorMsgList.style.display = 'block';
+            }
+        }).finally(() => {
+            if (typeof showGlobalLoading === 'function') showGlobalLoading(false);
+        });
+    }
+    initPage();
+
+})();
+</script>
+</body>
+</html>
